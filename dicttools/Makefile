@@ -1,46 +1,41 @@
 # makefile for create hitomoji.dic
 
-viewtest: hitomoji.dic
-	./dictview -d $< しょう
 
-clean :
-	rm hitomoji.dic
-	rm dist.db
-	rm slot_greed
-	rm dictgen
-	rm dictview
-	rm dictedit
-	rm g8/g8.xml.k.sql
-	rm g8/g8.xml.y.sql
-	rm g8/yomi.daku.sql
-	rm g8/g8.xml
-	rm kdic2.small.xml
-
-dictedit : dictedit.cpp
-	g++ $< -o $@
-
-dictview : dictview.cpp
-	g++ $< -o $@
+.PHONY: clean viewtest
 
 # 辞書の作成
-hitomoji.dic : dist.db dictgen
-	./dictgen -d $< -o $@ 
+hitomoji.dic : dict.db dictgen
+	./dictgen $< $@ 
 	
+viewtest: hitomoji.dic dictview
+	./dictview しょう
+
+clean:
+	rm -f dictgen dictview dictedit slot_greed
+	rm -f hitomoji.dic dict.db
+	rm -f g8/*.sql g8/g8.xml g8/*.m4
+	rm -f kdic2.small.xml
+
+# バイナリ辞書生成プログラム
 dictgen : dictgen.cpp
 	g++ $< -o $@ -lsqlite3
 
+# 辞書データ編集プログラム
+dictedit : dictedit.cpp
+	g++ $< -o $@
+
+# 辞書えつ覧プログラム
+dictview : dictview.cpp
+	g++ $< -o $@
+
 # DBの構築
-dist.db : g8/g8.xml.k.sql g8/g8.xml.y.sql g8/yomi.daku.sql create.sql slot_greed
-	rm dist.db
-	sqlite3 dist.db < create.sql
-	sqlite3 dist.db < EEOOFF
-	begin;
-	g8/g8.xml.k.sql
-	g8/g8.xml.y.sql
-	g8/yomi.daku.sql
-	commit;
-	EEOOFF
-	./slot_greed -d dist.db
+dict.db : g8/g8.xml.k.sql g8/g8.xml.y.sql g8/yomi.daku.sql create.sql \
+	slot_greed make.db.sh \
+	my-corpus/corpus.db
+	./make.db.sh
+
+my-corpus/corpus.db: my-corpus/source.txt
+	(cd my-corpus; ./make.corpus.db.sh)
 
 slot_greed : slot_greed.cpp
 	g++ $< -o $@ -lsqlite3
@@ -52,20 +47,23 @@ g8/g8.xml.k.sql g8/g8.xml.y.sql : g8/g8.xml make.sql.sh
 	(cd g8 ;../make.sql.sh)
 
 g8/g8.xml : kdic2.small.xml 
-	xmlstarlet sel -t -e 'g8' -n \
+	xmlstarlet sel -t \
+	  -e 'g8' -n \
 	  -m '//character[misc/grade <=8]' \
 	  -c . -n \
+	  -b -n \
 	  < $< > $@
 
 kdic2.small.xml : archive/kanjidic2.xml
 	xmlstarlet sel -t \
+	  -e "small-kdic2" -n \
 	  -m "//character" \
-	  -e "<character>" \
+	  -e "character" -n \
 	  -c "literal" \
 	  -c "codepoint" \
 	  -c "radical" \
 	  -c "misc" \
 	  -c "reading_meaning/rmgroup/reading[@r_type='ja_on' or @r_type='ja_kun']" \
-	  -b \
-	  -n \
+	  -b -n \
+	  -b -n \
 	  archive/kanjidic2.xml > kdic2.small.xml
