@@ -1,9 +1,14 @@
+// ===== dictgen.cpp (cleaned & slot-based version) =====
+//  v0.3.
+
 #include <iostream>
 #include <vector>
 #include <map>
 #include <fstream>
 #include <cstring>
 #include <sqlite3.h>
+
+constexpr int MAX_SLOT = 120;
 
 struct DictHeader {
     uint32_t magic;
@@ -99,39 +104,86 @@ int main(int argc,char **argv)
         sqlite3_finalize(stmt);
     }
 
-    // --- yomi mapping ---
-    std::map<std::string,std::vector<uint32_t>> mapy;
+    // --- yomi mapping (WITH RECURSIVE) ---
+    std::map<std::string, std::vector<uint32_t>> mapy_slots;
 
     {
         sqlite3_stmt *stmt;
 
-        sqlite3_prepare_v2(db,
-            "select yomi,k.cp from y inner join k on y.cp = k.cp order by yomi,k.slot",
-            -1,&stmt,nullptr);
+        std::string sql_cte =
+            "WITH RECURSIVE slots(n) AS ("
+            "  SELECT 1 "
+            "  UNION ALL "
+            "  SELECT n+1 FROM slots WHERE n < " + std::to_string(MAX_SLOT) +
+            ") "
+            "SELECT y.yomi, slots.n AS slot, k.cp "
+            "FROM (SELECT DISTINCT yomi FROM y) y "
+            "JOIN slots "
+            "LEFT JOIN (SELECT yomi, k.cp, k.slot FROM y JOIN k ON y.cp = k.cp) k "
+            "  ON k.yomi = y.yomi AND k.slot = slots.n "
+            "ORDER BY y.yomi, slots.n";
 
-        while(sqlite3_step(stmt)==SQLITE_ROW)
+        if (sqlite3_prepare_v2(db, sql_cte.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+            std::cerr << "prepare CTE failed\n";
+            return 1;
+        }
+
+        std::string current_y;
+        std::vector<uint32_t> slots(MAX_SLOT + 1, 0);
+
+        while (sqlite3_step(stmt) == SQLITE_ROW)
         {
-            const char *y=(const char*)sqlite3_column_text(stmt,0);
-            uint32_t cp = sqlite3_column_int(stmt,1);
+            const char *y = (const char*)sqlite3_column_text(stmt, 0);
+            int slot = sqlite3_column_int(stmt, 1);
+            uint32_t cp = (sqlite3_column_type(stmt, 2) == SQLITE_NULL)
+                            ? 0
+                            : (uint32_t)sqlite3_column_int(stmt, 2);
 
-            mapy[y].push_back(cp);
+            std::string ystr = y ? std::string(y) : std::string();
+
+            if (current_y.empty()) {
+                current_y = ystr;
+                std::fill(slots.begin(), slots.end(), 0);
+            }
+
+            if (ystr != current_y) {
+                mapy_slots[current_y] = slots;
+                current_y = ystr;
+                std::fill(slots.begin(), slots.end(), 0);
+            }
+
+            if (slot >= 1 && slot <= MAX_SLOT) {
+                slots[slot] = cp;
+            }
+        }
+
+        if (!current_y.empty()) {
+            mapy_slots[current_y] = slots;
         }
 
         sqlite3_finalize(stmt);
     }
 
-    // --- build yomi/list ---
-    for(auto &p:mapy)
+    // --- build yomi/list (variable length, trim tail) ---
+    for (auto &p : mapy_slots)
     {
         YomiEntry e;
 
-        utf8_to_utf16_6(p.first.c_str(),e.yomi);
+        utf8_to_utf16_6(p.first.c_str(), e.yomi);
+
+        const auto &slots = p.second;
+
+        int last = 0;
+        for (int s = MAX_SLOT; s >= 1; --s) {
+            if (slots[s] != 0) { last = s; break; }
+        }
 
         e.offset = list.size();
-        e.count  = p.second.size();
+        e.count  = last;
 
-        for(auto cp:p.second)
-            list.push_back(cp);
+        for (int s = 1; s <= last; ++s) {
+            list.push_back(slots[s]);
+        }
 
         yomi.push_back(e);
     }
