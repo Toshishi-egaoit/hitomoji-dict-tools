@@ -229,9 +229,13 @@ void render_keyboard(const std::vector<uint32_t>& list,
             size_t slotIndex = pos_it;
             size_t listIndex = start + slotIndex;
 
-            if(listIndex < list.size())
-                std::cout << ucs4_to_utf8(list[listIndex]) << " ";
-            else
+            if(listIndex < list.size()) {
+                uint32_t cp = list[listIndex];
+                if(cp == 0)
+                    std::cout << empty << " ";
+                else
+                    std::cout << ucs4_to_utf8(cp) << " ";
+            } else
                 std::cout << empty << " ";
         }
         std::cout << "\n";
