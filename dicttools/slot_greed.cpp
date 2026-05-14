@@ -1,8 +1,10 @@
 #include <iostream>
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 #include <algorithm>
 #include <bitset>
+#include <cmath>
 #include <sqlite3.h>
 
 constexpr int MAX_SLOT = 120;
@@ -10,13 +12,136 @@ constexpr int MAX_SLOT = 120;
 struct Kanji {
         int cp;
         std::string literal;
-        int freq;
+        double freq;
         std::vector<int> yomi_ids;
         int slot = -1;
 };
 
 std::string kana_to_romaji(const std::string& input);
 std::string katakana_to_hiragana(const std::string& input);
+
+constexpr int TOP_SLOT = 10;
+constexpr int LOW_FREQ_LIMIT = 20000;
+constexpr int LOW_FREQ_MIN_SLOT = 7;
+
+int score_slot(int slot) {
+        return slot <= TOP_SLOT ? slot : TOP_SLOT + 1;
+}
+
+double kanji_score(const Kanji& k) {
+        if (k.freq <= 0)
+                return 0.0;
+        return (double)k.yomi_ids.size() * score_slot(k.slot) / k.freq;
+}
+
+bool can_swap_slots(
+        int a_id,
+        int b_id,
+        const std::vector<Kanji>& kanjis,
+        const std::vector<std::vector<int>>& yomi_to_kanji)
+{
+        int a_slot = kanjis[a_id].slot;
+        int b_slot = kanjis[b_id].slot;
+
+        if (kanjis[a_id].freq > LOW_FREQ_LIMIT && b_slot < LOW_FREQ_MIN_SLOT)
+                return false;
+        if (kanjis[b_id].freq > LOW_FREQ_LIMIT && a_slot < LOW_FREQ_MIN_SLOT)
+                return false;
+
+        for (int y_id : kanjis[a_id].yomi_ids) {
+                for (int other_id : yomi_to_kanji[y_id]) {
+                        if (other_id == a_id || other_id == b_id)
+                                continue;
+                        if (kanjis[other_id].slot == b_slot)
+                                return false;
+                }
+        }
+
+        for (int y_id : kanjis[b_id].yomi_ids) {
+                for (int other_id : yomi_to_kanji[y_id]) {
+                        if (other_id == a_id || other_id == b_id)
+                                continue;
+                        if (kanjis[other_id].slot == a_slot)
+                                return false;
+                }
+        }
+
+        return true;
+}
+
+int improve_top_slots(
+        std::vector<Kanji>& kanjis,
+        const std::vector<std::vector<int>>& yomi_to_kanji)
+{
+        std::unordered_set<unsigned long long> seen_pairs;
+        std::vector<std::pair<int, int>> candidates;
+
+        for (const auto& group : yomi_to_kanji) {
+                std::vector<int> ranked = group;
+                std::sort(ranked.begin(), ranked.end(),
+                        [&](int a, int b) {
+                                return kanjis[a].freq < kanjis[b].freq;
+                        });
+
+                int top = std::min((int)ranked.size(), TOP_SLOT);
+                for (int i = 0; i < top; ++i) {
+                        for (int other : group) {
+                                if (ranked[i] == other)
+                                        continue;
+
+                                int a = std::min(ranked[i], other);
+                                int b = std::max(ranked[i], other);
+                                unsigned long long key =
+                                        ((unsigned long long)(unsigned int)a << 32) |
+                                        (unsigned int)b;
+
+                                if (seen_pairs.insert(key).second)
+                                        candidates.emplace_back(a, b);
+                        }
+                }
+        }
+
+        int swaps = 0;
+        bool improved = true;
+
+        while (improved) {
+                improved = false;
+                double best_delta = 0.0;
+                int best_a = -1;
+                int best_b = -1;
+
+                for (const auto& p : candidates) {
+                        int a = p.first;
+                        int b = p.second;
+
+                        if (score_slot(kanjis[a].slot) == score_slot(kanjis[b].slot))
+                                continue;
+                        if (!can_swap_slots(a, b, kanjis, yomi_to_kanji))
+                                continue;
+
+                        double before = kanji_score(kanjis[a]) + kanji_score(kanjis[b]);
+
+                        std::swap(kanjis[a].slot, kanjis[b].slot);
+                        double after = kanji_score(kanjis[a]) + kanji_score(kanjis[b]);
+                        std::swap(kanjis[a].slot, kanjis[b].slot);
+
+                        double delta = before - after;
+                        if (delta > best_delta) {
+                                best_delta = delta;
+                                best_a = a;
+                                best_b = b;
+                        }
+                }
+
+                if (best_a != -1) {
+                        std::swap(kanjis[best_a].slot, kanjis[best_b].slot);
+                        ++swaps;
+                        improved = true;
+                }
+        }
+
+        return swaps;
+}
 
 int main(int argc, char** argv) {
 
@@ -64,7 +189,7 @@ int main(int argc, char** argv) {
                         (const char*)sqlite3_column_text(stmt, 1);
                 std::string yomi =
                         (const char*)sqlite3_column_text(stmt, 2);
-                int freq = sqlite3_column_int(stmt, 3);
+                double freq = sqlite3_column_double(stmt, 3);
 
                 if (kanji_index.find(cp) == kanji_index.end()) {
                         int id = kanjis.size();
@@ -113,47 +238,64 @@ int main(int argc, char** argv) {
 
         std::cout << "max_group_size = " << max_group_size << std::endl;
 
-        std::vector<int> yomi_order(yomi_to_kanji.size());
-        for (int i = 0; i < yomi_order.size(); ++i)
-                yomi_order[i] = i;
+        std::vector<int> kanji_order(kanjis.size());
+        std::vector<int> kanji_max_group(kanjis.size(), 0);
 
-        std::sort(yomi_order.begin(), yomi_order.end(),
-                [&](int a, int b) {
-                        return yomi_to_kanji[a].size() > yomi_to_kanji[b].size();
-                });
-
-        for (int y_id : yomi_order) {
-                for (int k_id : yomi_to_kanji[y_id]) {
-
-                        if (kanjis[k_id].slot != -1)
-                                continue;
-
-                        std::bitset<MAX_SLOT + 1> forbidden;
-
-                        for (int other_y : kanjis[k_id].yomi_ids) {
-                                for (int other_k : yomi_to_kanji[other_y]) {
-                                        int s = kanjis[other_k].slot;
-                                        if (s != -1)
-                                                forbidden.set(s);
-                                }
-                        }
-
-                        bool assigned = false;
-
-                        for (int s = 1; s <= MAX_SLOT; ++s) {
-                                if (!forbidden.test(s)) {
-                                        kanjis[k_id].slot = s;
-                                        assigned = true;
-                                        break;
-                                }
-                        }
-
-                        if (!assigned) {
-                                std::cerr << "FAILED at " << kanjis[k_id].literal << "\n";
-                                return 1;
-                        }
+        for (int i = 0; i < (int)kanjis.size(); ++i) {
+                kanji_order[i] = i;
+                for (int y_id : kanjis[i].yomi_ids) {
+                        kanji_max_group[i] = std::max(
+                                kanji_max_group[i],
+                                (int)yomi_to_kanji[y_id].size());
                 }
         }
+
+        std::sort(kanji_order.begin(), kanji_order.end(),
+                [&](int a, int b) {
+                        double pa = kanji_max_group[a]
+                                * std::sqrt((double)kanjis[a].yomi_ids.size())
+                                / kanjis[a].freq;
+                        double pb = kanji_max_group[b]
+                                * std::sqrt((double)kanjis[b].yomi_ids.size())
+                                / kanjis[b].freq;
+                        if (pa != pb)
+                                return pa > pb;
+                        if (kanjis[a].freq != kanjis[b].freq)
+                                return kanjis[a].freq < kanjis[b].freq;
+                        return kanjis[a].cp < kanjis[b].cp;
+                });
+
+        for (int k_id : kanji_order) {
+                std::bitset<MAX_SLOT + 1> forbidden;
+
+                for (int other_y : kanjis[k_id].yomi_ids) {
+                        for (int other_k : yomi_to_kanji[other_y]) {
+                                int s = kanjis[other_k].slot;
+                                if (s != -1)
+                                        forbidden.set(s);
+                        }
+                }
+
+                bool assigned = false;
+                int start_slot = kanjis[k_id].freq > LOW_FREQ_LIMIT
+                        ? LOW_FREQ_MIN_SLOT
+                        : 1;
+
+                for (int s = start_slot; s <= MAX_SLOT; ++s) {
+                        if (!forbidden.test(s)) {
+                                kanjis[k_id].slot = s;
+                                assigned = true;
+                                break;
+                        }
+                }
+
+                if (!assigned) {
+                        std::cerr << "FAILED at " << kanjis[k_id].literal << "\n";
+                        return 1;
+                }
+        }
+
+        int improved_swaps = improve_top_slots(kanjis, yomi_to_kanji);
 
         int max_slot = 0;
         for (const auto& k : kanjis)
@@ -162,6 +304,7 @@ int main(int argc, char** argv) {
         std::cout << "Kanji count: " << kanjis.size() << "\n";
         std::cout << "Yomi count: " << yomi_to_kanji.size() << "\n";
         std::cout << "Max slot used: " << max_slot << "\n";
+        std::cout << "Top-slot swaps: " << improved_swaps << "\n";
 
         if (output_detail) {
                 for (const auto& k : kanjis) {
@@ -288,4 +431,3 @@ std::string katakana_to_hiragana(const std::string& input) {
     }
     return out;
 }
-
