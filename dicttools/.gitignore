@@ -6,8 +6,17 @@ kdic2.small.xml
 **/*.db
 **/*.xml
 **/*.csv
+**/*.tsv
 **/*.list
 **/*.choice
 **/*.tmp
 **/*.swp
 my-corpus/corpus.*
+my-corpus/Readme.toshi
+my-corpus/source.txt
+dictgen
+dictview
+hitomoji.dic
+jmdict/dictmatch
+slot_greed
+
