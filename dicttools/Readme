@@ -1,4 +1,4 @@
-ひともじv0.3.1
+ひともじv0.1.2
 
 このディレクトリには、ひともじの辞書作成用のツールとデータベースが置いてあります。
 
@@ -11,7 +11,6 @@
   スクリプト
 
 * dictgen.cpp
-  v0.3.1 文字配置のバグを修正
   辞書バイナリ作成ツール
   上記で準備したSQLite3のDBをIME(hitomoji.dll)から読み込めるバイナリ形式に
   変換する。
@@ -24,13 +23,21 @@
   バイナリ辞書えつ覧ツール
   パラメタとして読みを指定すると、辞書ファイルから展開/表示するツール
 
-* dictedit.cpp
+* dictmatch.cpp
+  JMdict(日本語の単語辞書)とKANJIDIC2 の突合を行うためのツール。
+  漢字を指定すると、その漢字の読みを実際に、JMDictで使用例があるかどうかを
+  調べる。
+
+* dictedit.cpp(未実装)
   辞書メンテツール。
   独自の読みや、文字を追加/修正/さく除するツール
   基本的には、add/edit/deleteの3コマンドが使用できる。
   このツールの出力先は、バイナリ辞書ではなくSQLite3のDBとなる。
   反映させるには、再度、slog_greedとdictgenを利用する必要がある。
 
-なお、辞書作成にあたり、KANJIDIC2プロジェクトの成果物を利用しています。
-https://sources.debian.org/data/main/k/kanjidic/2022.08.23/kanjidic_doc.html
+--
+なお、辞書作成にあたり、以下のプロジェクトの成果物を利用しています。
+* KANJIDIC2
+* JMdict
+  https://sources.debian.org/data/main/k/kanjidic/2022.08.23/kanjidic_doc.html
 

@@ -79,8 +79,6 @@ https://github.com/toshishi-egaoit/hitomoji/
 - slot位置が不当に低い場合は、文字の入れ換えを(可能な範囲で)実施
 
 
-*以降は未実装*
-
 ### v0.1.3
 
 目的：JMdictを用いた辞書の拡充(常用漢字)
@@ -88,7 +86,9 @@ https://github.com/toshishi-egaoit/hitomoji/
 - 促音辞書(実=じっ、など)の追加
 - 音便対応:濁音/半濁音辞書の追加
 - 音便対応:特殊読み(日=に、など)の追加
-- KANJIDIC2の読みのうち、slotに影響を与えそうな不当な読みの排除(教育漢字)
+- KANJIDIC2の読みのうち、slotに影響を与えそうな不当な読みの排除(常用漢字のみ)
+
+*以降は未実装*
 
 ### v0.2
 
