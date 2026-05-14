@@ -11,13 +11,13 @@ viewtest: hitomoji.dic dictview
 	./dictview しょう
 
 
-jmdict/add_jmdict_yomi.sql:
+jmdict/add_unreg_yomi.sql:
 	(cd jmdict ; make add_unreg_yomi.sql)
 
-jmdict/jm_k.tsv jmdict/jm_r.tsv jmdict/jm_restr.tsv: jmdict/JMdict.xml jmdict/make.tsv.sh
+jmdict/jm_k.tsv jmdict/jm_r.tsv jmdict/jm_restr.tsv: jmdict/JMdict.xml jmdict/make_jmdict_tsv.sh
 	(cd jmdict ; ./make_jmdict_tsv.sh)
 
-jmdict/jmdict.db: jmdict/jm_k.tsv jmdict/jm_r.tsv jmdict/jm_restr.tsv jmdict/create.sql jmdict/make.db.sh
+jmdict/jmdict.db: jmdict/jm_k.tsv jmdict/jm_r.tsv jmdict/jm_restr.tsv jmdict/create.sql jmdict/make_jmdict_db.sh
 	(cd jmdict ; ./make_jmdict_db.sh)
 
 clean:
@@ -44,8 +44,13 @@ dict.db : g8/g8.xml.k.sql g8/g8.xml.y.sql \
 	g8/yomi.daku.sql g8/yomi.han.sql create.sql \
 	slot_greed make.db.sh \
 	my-corpus/corpus.db \
-	jmdict/add_unreg_yomi.sql
+	jmdict/add_unreg_yomi.sql \
+	jmdict/dictmatch jmdict/exclude_no_evidence_yomi.sh \
+	jmdict/jmdict.db
 	./make.db.sh
+
+jmdict/dictmatch: jmdict/dictmatch.cpp
+	(cd jmdict ; make dictmatch)
 
 my-corpus/corpus.db: my-corpus/source.txt
 	(cd my-corpus; ./make.corpus.db.sh)

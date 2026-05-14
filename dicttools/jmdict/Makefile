@@ -1,4 +1,9 @@
 
+EXCLUDE_SQL=ex-g1.sql ex-g2.sql ex-g3.sql ex-g4.sql ex-g5.sql ex-g6.sql ex-g8.sql
+.PHONY: FORCE
+
+all: add_unreg_yomi.sql exclude-all.sql 
+
 add_unreg_yomi.sql : g1.sql g2.sql g3.sql g4.sql g5.sql g6.sql
 	cat g1.sql g2.sql g3.sql g4.sql g5.sql g6.sql > $@
 
@@ -22,6 +27,9 @@ g6.sql: g6.choice
 
 g8.sql: g8.choice
 	./make_unreg_yomi_sql.sh $<
+
+exclude-all.sql : $(EXCLUDE_SQL)
+	cat $(EXCLUDE_SQL) > $@
 
 g1.choice: g1.list
 	echo "You MUST edit $<  into $@"
@@ -74,6 +82,27 @@ g6.list : dictmatch jmdict.db get_unreg_yomi_list.sh
 g8.list : dictmatch jmdict.db get_unreg_yomi_list.sh
 	./get_unreg_yomi_list.sh $(LOPT) '//character/misc[grade = 8]' > $@
 
+ex-g1.sql: FORCE dictmatch jmdict.db exclude_no_evidence_yomi.sh
+	./exclude_no_evidence_yomi.sh '//character/misc[grade = 1]' > $@
+
+ex-g2.sql: FORCE dictmatch jmdict.db exclude_no_evidence_yomi.sh
+	./exclude_no_evidence_yomi.sh '//character/misc[grade = 2]' > $@
+
+ex-g3.sql: FORCE dictmatch jmdict.db exclude_no_evidence_yomi.sh
+	./exclude_no_evidence_yomi.sh '//character/misc[grade = 3]' > $@
+
+ex-g4.sql: FORCE dictmatch jmdict.db exclude_no_evidence_yomi.sh
+	./exclude_no_evidence_yomi.sh '//character/misc[grade = 4]' > $@
+
+ex-g5.sql: FORCE dictmatch jmdict.db exclude_no_evidence_yomi.sh
+	./exclude_no_evidence_yomi.sh '//character/misc[grade = 5]' > $@
+
+ex-g6.sql: FORCE dictmatch jmdict.db exclude_no_evidence_yomi.sh
+	./exclude_no_evidence_yomi.sh '//character/misc[grade = 6]' > $@
+
+ex-g8.sql: FORCE dictmatch jmdict.db exclude_no_evidence_yomi.sh
+	./exclude_no_evidence_yomi.sh '//character/misc[grade = 8]' > $@
+
 jmdict.db : jm_k.tsv jm_restr.tsv jm_r.tsv make_jmdict_db.sh
 	./make_jmdict_db.sh
 
@@ -86,3 +115,4 @@ dictmatch : dictmatch.cpp
 clean:
 	rm -f dictmatch
 	rm -f g*.list
+	rm -f ex-g*.sql exclude-all.sql

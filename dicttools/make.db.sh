@@ -13,6 +13,11 @@ begin;
 commit;
 EEOOFF
 
+# JMdictで使用例が見つからない読みを非対象にする。
+# slot_greedはy viewを読むため、採色前に除外しておく。
+(cd jmdict ; make exclude-all.sql)
+sqlite3 dict.db < jmdict/exclude-all.sql
+
 # 独自コーパスがある場合はそれをマージ
 # 割合は以下の変数で可変
 # ※freq(順位)をそのまま使うと品質が悪いので、その逆数を取って、
@@ -54,5 +59,3 @@ EEOOFF
 # 上で得たfreqを用いてGreed法で採色グラフ問題を解く
 # これによって、各文字のキー位置(slot)を確定させる
 ./slot_greed -d dict.db
-
-
