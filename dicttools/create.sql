@@ -24,6 +24,13 @@ create table  y_dakuon (
 	foreign key(cp) references k(cp)
 );
 
+creatE TABLE y_jmdict (
+	cp	integer,
+	yomi	varchar(10),
+	wd_cnt	integer,
+	foreign key(cp) references k(cp)
+);
+
 create view y as
 	select distinct letter, k.cp ,tp , yomi
 	from y_base
@@ -31,4 +38,8 @@ create view y as
 	union 
 	select distinct letter, k.cp ,"on" , yomi
 	from y_dakuon
-	  inner join k on k.cp = y_dakuon.cp;
+	  inner join k on k.cp = y_dakuon.cp
+	union 
+	select distinct letter, k.cp ,"on" , yomi
+	from y_jmdict
+	  inner join k on k.cp = y_jmdict.cp;

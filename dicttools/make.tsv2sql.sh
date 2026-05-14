@@ -4,7 +4,12 @@
 # * sed
 # * m4
 
-SOURCE=yomi.daku
+if [ "$1" == "" ] ; then
+	echo 'usage: make.daku.sql.sh TARGET' ;
+	exit ;
+fi
+
+SOURCE=$1
 
 # その後、sedで以下を行う。
 # * 送り仮名の分割

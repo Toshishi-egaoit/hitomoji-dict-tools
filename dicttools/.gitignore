@@ -1,0 +1,13 @@
+**/old/**
+**/archive/**
+kdic2.small.xml
+**/*.m4
+**/*.sql
+**/*.db
+**/*.xml
+**/*.csv
+**/*.list
+**/*.choice
+**/*.tmp
+**/*.swp
+my-corpus/corpus.*

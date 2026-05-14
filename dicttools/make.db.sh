@@ -8,6 +8,8 @@ begin;
 .read g8/g8.xml.k.sql
 .read g8/g8.xml.y.sql
 .read g8/yomi.daku.sql
+.read g8/yomi.han.sql
+.read jmdict/add_unreg_yomi.sql 
 commit;
 EEOOFF
 
