@@ -5,7 +5,14 @@
 # * sed
 # * m4
 
-SOURCE=g8.xml
+
+if [ "$1" == "" ] ; then
+	echo "usage: make.sql.sh source-XML";
+	echo "   ex: make.sql.sh g9.xml"
+	exit 1;
+fi
+
+SOURCE=$1
 
 # このスクリプトではxmlから以下を抽出
 # * literal
@@ -32,7 +39,7 @@ SOURCE=g8.xml
 
 
 xmlstarlet sel -t \
-	-m '//character[misc/grade <= "8"]' \
+	-m '//character' \
 	-m 'reading' \
 		-v "../literal" -o "," \
 		-v ../misc/grade  -o "," \

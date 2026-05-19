@@ -39,15 +39,16 @@ dictedit : dictedit.cpp
 dictview : dictview.cpp
 	g++ $< -o $@
 
+GRADE=g9
 # DBの構築
-dict.db : g8/g8.xml.k.sql g8/g8.xml.y.sql \
-	g8/yomi.daku.sql g8/yomi.han.sql create.sql \
+dict.db : $(GRADE)/$(GRADE).xml.k.sql $(GRADE)/$(GRADE).xml.y.sql \
+	create.sql \
 	slot_greed make.db.sh \
 	my-corpus/corpus.db \
 	jmdict/add_unreg_yomi.sql \
 	jmdict/dictmatch jmdict/exclude_no_evidence_yomi.sh \
 	jmdict/jmdict.db
-	./make.db.sh
+	./make.db.sh $(GRADE)
 
 jmdict/dictmatch: jmdict/dictmatch.cpp
 	(cd jmdict ; make dictmatch)
@@ -58,19 +59,13 @@ my-corpus/corpus.db: my-corpus/source.txt
 slot_greed : slot_greed.cpp
 	g++ $< -o $@ -lsqlite3
 
-g8/yomi.daku.sql : g8/yomi.daku.tsv
-	(cd g8 ;../make.tsv2sql.sh yomi.daku)
+$(GRADE)/$(GRADE).xml.k.sql $(GRADE)/$(GRADE).xml.y.sql : $(GRADE)/$(GRADE).xml make.sql.sh
+	(cd $(GRADE) ;../make.sql.sh $(GRADE).xml) 
 
-g8/yomi.han.sql : g8/yomi.han.tsv
-	(cd g8 ;../make.tsv2sql.sh yomi.han)
-
-g8/g8.xml.k.sql g8/g8.xml.y.sql : g8/g8.xml make.sql.sh
-	(cd g8 ;../make.sql.sh)
-
-g8/g8.xml : kdic2.small.xml 
+$(GRADE)/$(GRADE).xml : kdic2.small.xml 
 	xmlstarlet sel -t \
-	  -e 'g8' -n \
-	  -m '//character[misc/grade <=8]' \
+	  -e '$(GRADE)' -n \
+	  -m '//character[misc/grade <=9]' \
 	  -c . -n \
 	  -b -n \
 	  < $< > $@

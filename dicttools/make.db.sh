@@ -1,14 +1,20 @@
 #!/bin/sh
 
+if [ "$1" == "" ] ; then
+	echo "usage: make.db.sh source-dir";
+	echo "   ex: make.db.sh g9"
+	exit 1;
+fi
+
+SOURCE=$1
+
 # db を再作成
 rm -f dict.db
 sqlite3 dict.db < create.sql
 sqlite3 dict.db << EEOOFF
 begin;
-.read g8/g8.xml.k.sql
-.read g8/g8.xml.y.sql
-.read g8/yomi.daku.sql
-.read g8/yomi.han.sql
+.read $SOURCE/$SOURCE.xml.k.sql
+.read $SOURCE/$SOURCE.xml.y.sql
 .read jmdict/add_unreg_yomi.sql 
 commit;
 EEOOFF

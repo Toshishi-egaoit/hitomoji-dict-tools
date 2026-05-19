@@ -2,20 +2,3 @@
 
 g8 = KANJIDIC2/character/misc/grade の8番目=常用漢字を示す
 
--- yomi.han.tsv
-つくりかた
-
-1  SQLite3でこのtsvのもとをを作成
-
-> .output yomi.han.out
-> select  letter ,cp, 'ぱ' || substr(yomi,2) ,  yomi from y  where yomi like 'は%' 
-> select  letter ,cp, 'ぴ' || substr(yomi,2) ,  yomi from y  where yomi like 'ひ%' 
-> select  letter ,cp, 'ぷ' || substr(yomi,2) ,  yomi from y  where yomi like 'ふ%' 
-> select  letter ,cp, 'ぺ' || substr(yomi,2) ,  yomi from y  where yomi like 'へ%' 
-> select  letter ,cp, 'ぽ' || substr(yomi,2) ,  yomi from y  where yomi like 'ぼ%' 
-
-2. sedなどで整形
-  sed -e 's/|/\t/g' -e 'd/っ$/' < yomi.han.out > yomi.han.tsv
-
-
-
