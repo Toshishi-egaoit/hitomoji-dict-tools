@@ -5,6 +5,9 @@ create table  k (
 	cp	integer primary key,
 	grade	integer ,
 	freq	integer ,
+	radical	integer,
+	strokes	integer,
+	jis_level	integer,
 	slot	integer
 );
 
@@ -15,6 +18,13 @@ create table  y_base (
 	okuri	varchar(10),
 	fromKdic bool,
 	foreign key(cp) references k(cp)
+);
+
+create table y_nanori (
+	cp	integer,
+	yomi	varchar(10),
+	foreign key(cp) references k(cp),
+	unique(cp, yomi)
 );
 
 create table  y_dakuon (
