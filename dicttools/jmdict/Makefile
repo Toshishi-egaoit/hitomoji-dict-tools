@@ -63,7 +63,7 @@ g8.choice: g8.list
 	echo "You MUST edit $<  into $@"
 	@false
 
-g9.choice: g8.list
+g9.choice: g9.list
 	echo "You MUST edit $<  into $@"
 	@false
 
