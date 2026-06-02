@@ -8,6 +8,7 @@
 #include <set>
 #include <sqlite3.h>
 #include <string>
+#include <sys/stat.h>
 #include <vector>
 
 struct Reading {
@@ -123,10 +124,22 @@ static void add_example(std::map<std::string, std::vector<std::string>>& example
                         size_t limit = 5)
 {
     auto& bucket = examples[key];
-    if (bucket.size() >= limit)
+    if (limit != 0 && bucket.size() >= limit)
         return;
     if (std::find(bucket.begin(), bucket.end(), value) == bucket.end())
         bucket.push_back(value);
+}
+
+static void print_examples(const std::string& yomi, const std::vector<std::string>& examples, bool missing)
+{
+    for (const auto& ex : examples) {
+        size_t sep = ex.find('/');
+        if (sep == std::string::npos) {
+            std::cout << "\t" << (missing ? "T" : "F") << "\t" << yomi << "\t" << ex << "\t\n";
+        } else {
+            std::cout << "\t" << (missing ? "T" : "F") << "\t" << yomi << "\t" << ex.substr(0, sep) << "\t" << ex.substr(sep + 1) << "\n";
+        }
+    }
 }
 
 static std::vector<Reading> load_target_readings(sqlite3* db, const std::string& target)
@@ -234,24 +247,54 @@ static int count_target(const std::vector<uint32_t>& keb, uint32_t target_cp)
     return count;
 }
 
+static bool option_value_missing(int argc, char** argv, int i)
+{
+    return i + 1 >= argc || argv[i + 1][0] == '-';
+}
+
+static bool file_exists(const std::string& path)
+{
+    struct stat st;
+    return stat(path.c_str(), &st) == 0;
+}
+
 int main(int argc, char** argv)
 {
     std::string dict_db = "../dict.db";
     std::string jmdict_db = "jmdict.db";
     std::string target;
+    bool verbose = false;
+    int min_count = 0;
 
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
-        if (arg == "-d" && i + 1 < argc)
+        if (arg == "-d") {
+            if (option_value_missing(argc, argv, i)) {
+                std::cerr << "ERROR\t-d requires dict-db\n";
+                return 2;
+            }
             dict_db = argv[++i];
-        else if (arg == "-j" && i + 1 < argc)
+        } else if (arg == "-j") {
+            if (option_value_missing(argc, argv, i)) {
+                std::cerr << "ERROR\t-j requires JMdict-db\n";
+                return 2;
+            }
             jmdict_db = argv[++i];
-        else
+        } else if (arg == "-l") {
+            if (option_value_missing(argc, argv, i)) {
+                std::cerr << "ERROR\t-l requires min-count\n";
+                return 2;
+            }
+            min_count = std::stoi(argv[++i]);
+        } else if (arg == "-v") {
+            verbose = true;
+        } else {
             target = arg;
+        }
     }
 
     if (target.empty()) {
-        std::cerr << "usage: dictmatch [-d KANJIDICT-name] [-j JMdict-name] <kanji>\n";
+        std::cerr << "usage: dictmatch [-v] [-l min-count] [-d dict-db] [-j JMdict-db] <kanji>\n";
         return 2;
     }
 
@@ -262,8 +305,18 @@ int main(int argc, char** argv)
     }
     uint32_t target_cp = target_cps[0];
 
+    if (!file_exists(dict_db)) {
+        std::cerr << "ERROR\tdict db does not exist\t" << dict_db << "\n";
+        return 2;
+    }
+
+    if (!file_exists(jmdict_db)) {
+        std::cerr << "ERROR\tJMdict db does not exist\t" << jmdict_db << "\n";
+        return 2;
+    }
+
     sqlite3* db = nullptr;
-    if (sqlite3_open(dict_db.c_str(), &db) != SQLITE_OK) {
+    if (sqlite3_open_v2(dict_db.c_str(), &db, SQLITE_OPEN_READONLY, nullptr) != SQLITE_OK) {
         std::cerr << "ERROR\tcannot open db\t" << dict_db << "\n";
         return 2;
     }
@@ -293,7 +346,7 @@ int main(int argc, char** argv)
         "order by keb, reb";
 
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
-        std::cerr << "ERROR\tprepare failed\tjm_pair\n";
+        std::cerr << "ERROR\tprepare failed\t(jmdict.jm_pair is not exist ?)\n";
         sqlite3_close(db);
         return 2;
     }
@@ -301,6 +354,7 @@ int main(int argc, char** argv)
     std::string like = "%" + target + "%";
     sqlite3_bind_text(stmt, 1, like.c_str(), -1, SQLITE_TRANSIENT);
 
+    size_t example_limit = verbose ? 0 : 5;
     int pair_count = 0;
     int aligned_count = 0;
 
@@ -322,10 +376,10 @@ int main(int argc, char** argv)
         ++aligned_count;
         for (const auto& seg : segments) {
             candidate_count[seg]++;
-            add_example(candidate_examples, seg, keb + "/" + reb);
+            add_example(candidate_examples, seg, keb + "/" + reb, example_limit);
             if (existing.count(seg)) {
                 evidence_count[seg]++;
-                add_example(evidence_examples, seg, keb + "/" + reb);
+                add_example(evidence_examples, seg, keb + "/" + reb, example_limit);
             }
         }
     }
@@ -338,14 +392,11 @@ int main(int argc, char** argv)
 
     bool has_issue = false;
     for (const auto& r : target_readings) {
-        std::cout << r.tp << "\t" << r.yomi << "\t";
         if (evidence_count[r.yomi] > 0) {
-            std::cout << "OK\t" << evidence_count[r.yomi];
-            for (const auto& ex : evidence_examples[r.yomi])
-                std::cout << "\t" << ex;
-            std::cout << "\n";
+            std::cout << r.tp << "\t" << r.yomi << "\tOK\t" << evidence_count[r.yomi] << "\n";
+            print_examples(r.yomi, evidence_examples[r.yomi], false);
         } else {
-            std::cout << "NO_EVIDENCE\t0\n";
+            std::cout << r.tp << "\t" << r.yomi << "\tNO_EVIDENCE\t0\n";
             std::cerr << "NO_EVIDENCE\t" << target << "\t" << r.tp << "\t" << r.yomi << "\n";
             has_issue = true;
         }
@@ -353,17 +404,17 @@ int main(int argc, char** argv)
 
     std::cout << "\n[candidates]\n";
     for (const auto& p : candidate_count) {
-        std::cout << p.first << "\t" << p.second;
-        if (!existing.count(p.first))
-            std::cout << "\tMISSING";
-        for (const auto& ex : candidate_examples[p.first])
-            std::cout << "\t" << ex;
-        std::cout << "\n";
+        bool missing = !existing.count(p.first);
+        if (missing && p.second < min_count)
+            continue;
 
-        if (!existing.count(p.first)) {
+        if (!missing) {
+            std::cerr << "EXIST\t" << target << "\t" << p.first << "\t" << p.second << "\n";
+        } else {
             std::cerr << "MISSING_CANDIDATE\t" << target << "\t" << p.first << "\t" << p.second << "\n";
             has_issue = true;
         }
+        print_examples(p.first, candidate_examples[p.first], missing);
     }
 
     sqlite3_close(db);
