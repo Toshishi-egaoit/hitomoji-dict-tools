@@ -3,6 +3,9 @@
 kdic2.small.xml
 **/*.m4
 **/*.sql
+!create.sql
+!jmdict/create.sql
+!jmdict/p1/create-p1.sql
 **/*.db
 **/*.xml
 **/*.csv
@@ -11,6 +14,7 @@ kdic2.small.xml
 **/*.choice
 **/*.tmp
 **/*.swp
+**/*.dtd
 my-corpus/corpus.*
 my-corpus/Readme.toshi
 my-corpus/source.txt
@@ -18,5 +22,5 @@ dictgen
 dictview
 hitomoji.dic
 jmdict/dictmatch
+jmdict/p1/p1filter
 slot_greed
-
