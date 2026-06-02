@@ -120,7 +120,7 @@ ex-g9.sql: dictmatch jmdict.db exclude_no_evidence_yomi.sh
 jmdict.db : jm_k.tsv jm_restr.tsv jm_r.tsv make_jmdict_db.sh
 	./make_jmdict_db.sh
 
-jm_k.tsv jm_restr.tsv jm_r.tsv: JMdict.xml make_jmdict_tsv.sh 
+jm_k.tsv jm_restr.tsv jm_r.tsv: ../archive/JMdict.xml make_jmdict_tsv.sh 
 	./make_jmdict_tsv.sh
 
 dictmatch : dictmatch.cpp

@@ -2,6 +2,20 @@
 
 このディレクトリ以下には、日本語IME「ひともじ」の辞書(hitomoji.dic)を作成/管理するためのツール群を格納している。
 
+上流辞書データは `archive/` に置く。`archive/` は Git 管理対象外であり、
+KANJIDIC2 と JMdict の再配布を避けるため、各環境で個別に用意する。
+
+- `archive/kanjidic2.xml`
+- `archive/JMdict.xml`
+
+辞書生成の基本順序は次の通り。
+
+```
+make -C kdic2
+make -C jmdict
+make -C jmdict/p1
+```
+
 ディレクトリ構成は次のようにしている。詳細は各ディレクトリ内の README.md を参照されたい。
 
 

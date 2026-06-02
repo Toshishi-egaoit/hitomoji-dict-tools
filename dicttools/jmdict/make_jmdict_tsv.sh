@@ -1,6 +1,6 @@
 #!/bin/sh
 
-SOURCE=JMdict.xml
+SOURCE=../archive/JMdict.xml
 
 if [ ! -f "$SOURCE" ] ; then
 	echo "not found: $SOURCE" >&2
