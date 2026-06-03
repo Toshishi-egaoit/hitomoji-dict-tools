@@ -56,6 +56,14 @@ create table if not exists y_gjo (
 	unique(cp, yomi)
 );
 
+create table if not exists y_gjin (
+	cp	integer,
+	yomi	varchar(10),
+	wd_cnt	integer,
+	foreign key(cp) references k(cp),
+	unique(cp, yomi)
+);
+
 create view y as
 	select distinct letter, k.cp, tp, yomi
 	from y_base
@@ -79,4 +87,6 @@ create view y as
 	union
 	select distinct letter, k.cp, 'on', yomi from y_g6 inner join k on k.cp = y_g6.cp
 	union
-	select distinct letter, k.cp, 'on', yomi from y_gjo inner join k on k.cp = y_gjo.cp;
+	select distinct letter, k.cp, 'on', yomi from y_gjo inner join k on k.cp = y_gjo.cp
+	union
+	select distinct letter, k.cp, 'on', yomi from y_gjin inner join k on k.cp = y_gjin.cp;

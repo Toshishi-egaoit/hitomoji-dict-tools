@@ -10,11 +10,8 @@ gkyo)
 gjo)
 	WHERE='grade = 8'
 	;;
-gjin)
-	WHERE='grade in (9, 10)'
-	;;
 *)
-	echo "usage: make-p2-sql.sh {gkyo|gjo|gjin} < ex-stage.tsv" >&2
+	echo "usage: make-p2-sql.sh {gkyo|gjo} < ex-stage.tsv" >&2
 	exit 1
 	;;
 esac

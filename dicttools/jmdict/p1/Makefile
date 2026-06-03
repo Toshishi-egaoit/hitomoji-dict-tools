@@ -6,7 +6,7 @@ JMDB = ../jmdict.db
 DICTMATCH = ../dictmatch
 P1FILTER = p1filter
 
-STAGES = g1 g2 g3 g4 g5 g6 gjo
+STAGES = g1 g2 g3 g4 g5 g6 gjo gjin
 
 .PHONY: all clean clean-tsv counts
 .SECONDARY: $(STAGES:%=%.accept.tsv) $(STAGES:%=%.sql)
@@ -40,6 +40,9 @@ g6.tsv: list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(KDB)
 gjo.tsv: list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(KDB)
 	./list-missing-yomi.sh -d $(KDB) -j $(JMDB) -l $(P1_LIMIT) -w 'grade = 8' > $@
 
+gjin.tsv: list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(KDB)
+	./list-missing-yomi.sh -d $(KDB) -j $(JMDB) -l $(P1_LIMIT) -w 'grade in (9, 10)' > $@
+
 $(P1FILTER): p1filter.cpp
 	g++ $< -o $@ -lsqlite3
 
@@ -61,7 +64,8 @@ counts: $(DB)
 	  'select "y_g4", count(*) from y_g4;' \
 	  'select "y_g5", count(*) from y_g5;' \
 	  'select "y_g6", count(*) from y_g6;' \
-	  'select "y_gjo", count(*) from y_gjo;'
+	  'select "y_gjo", count(*) from y_gjo;' \
+	  'select "y_gjin", count(*) from y_gjin;'
 
 clean:
 	rm -f $(DB)

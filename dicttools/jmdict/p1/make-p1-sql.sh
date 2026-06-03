@@ -3,11 +3,11 @@
 STAGE=$1
 
 case "$STAGE" in
-g1|g2|g3|g4|g5|g6|gjo)
+g1|g2|g3|g4|g5|g6|gjo|gjin)
 	TABLE=y_$STAGE
 	;;
 *)
-	echo "usage: make-p1-sql.sh {g1|g2|g3|g4|g5|g6|gjo} < stage.tsv" >&2
+	echo "usage: make-p1-sql.sh {g1|g2|g3|g4|g5|g6|gjo|gjin} < stage.tsv" >&2
 	exit 1
 	;;
 esac

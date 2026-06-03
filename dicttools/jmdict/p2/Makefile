@@ -3,7 +3,7 @@ P1DB = ../p1/dict-jmdict-p1.db
 JMDB = ../jmdict.db
 DICTMATCH = ../dictmatch
 
-STAGES = gkyo gjo gjin
+STAGES = gkyo gjo
 
 .PHONY: all clean clean-tsv counts
 .SECONDARY: $(STAGES:%=ex-%.sql)
@@ -20,9 +20,6 @@ ex-gkyo.tsv: list-no-evidence-yomi.sh $(DICTMATCH) $(JMDB) $(P1DB)
 
 ex-gjo.tsv: list-no-evidence-yomi.sh $(DICTMATCH) $(JMDB) $(P1DB)
 	./list-no-evidence-yomi.sh -d $(P1DB) -j $(JMDB) -w 'grade = 8' > $@
-
-ex-gjin.tsv: list-no-evidence-yomi.sh $(DICTMATCH) $(JMDB) $(P1DB)
-	./list-no-evidence-yomi.sh -d $(P1DB) -j $(JMDB) -w 'grade in (9, 10)' > $@
 
 $(DICTMATCH):
 	$(MAKE) -C .. dictmatch
