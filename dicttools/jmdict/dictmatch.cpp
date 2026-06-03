@@ -263,7 +263,8 @@ static bool run_target(sqlite3* db,
                        const std::string& target,
                        const std::map<std::string, std::vector<std::string>>& all_readings,
                        bool verbose,
-                       int min_count)
+                       int min_count,
+                       bool missing_only)
 {
     std::vector<uint32_t> target_cps = to_cps(target);
     if (target_cps.size() != 1) {
@@ -328,28 +329,42 @@ static bool run_target(sqlite3* db,
     }
     sqlite3_finalize(stmt);
 
-    std::cout << "target\t" << target << "\n";
-    std::cout << "jm_pair\t" << pair_count << "\n";
-    std::cout << "aligned\t" << aligned_count << "\n";
-    std::cout << "\n[readings]\n";
-
     bool has_issue = false;
-    for (const auto& r : target_readings) {
-        if (evidence_count[r.yomi] > 0) {
-            std::cout << r.tp << "\t" << r.yomi << "\tOK\t" << evidence_count[r.yomi] << "\n";
-            print_examples(r.yomi, evidence_examples[r.yomi], false);
-        } else {
-            std::cout << r.tp << "\t" << r.yomi << "\tNO_EVIDENCE\t0\n";
-            std::cerr << "NO_EVIDENCE\t" << target << "\t" << r.tp << "\t" << r.yomi << "\n";
-            has_issue = true;
+
+    if (!missing_only) {
+        std::cout << "target\t" << target << "\n";
+        std::cout << "jm_pair\t" << pair_count << "\n";
+        std::cout << "aligned\t" << aligned_count << "\n";
+        std::cout << "\n[readings]\n";
+
+        for (const auto& r : target_readings) {
+            if (evidence_count[r.yomi] > 0) {
+                std::cout << r.tp << "\t" << r.yomi << "\tOK\t" << evidence_count[r.yomi] << "\n";
+                print_examples(r.yomi, evidence_examples[r.yomi], false);
+            } else {
+                std::cout << r.tp << "\t" << r.yomi << "\tNO_EVIDENCE\t0\n";
+                std::cerr << "NO_EVIDENCE\t" << target << "\t" << r.tp << "\t" << r.yomi << "\n";
+                has_issue = true;
+            }
         }
+
+        std::cout << "\n[candidates]\n";
+        std::cout.flush();
     }
 
-    std::cout << "\n[candidates]\n";
     for (const auto& p : candidate_count) {
         bool missing = !existing.count(p.first);
         if (missing && p.second < min_count)
             continue;
+
+        if (missing_only) {
+            if (missing) {
+                std::cout << "MISSING_CANDIDATE\t" << target << "\t" << p.first << "\t" << p.second << "\n";
+                print_examples(p.first, candidate_examples[p.first], true);
+                has_issue = true;
+            }
+            continue;
+        }
 
         if (!missing) {
             std::cerr << "EXIST\t" << target << "\t" << p.first << "\t" << p.second << "\n";
@@ -369,6 +384,7 @@ int main(int argc, char** argv)
     std::string jmdict_db = "jmdict.db";
     std::vector<std::string> targets;
     bool verbose = false;
+    bool missing_only = false;
     int min_count = 0;
 
     for (int i = 1; i < argc; ++i) {
@@ -393,6 +409,8 @@ int main(int argc, char** argv)
             min_count = std::stoi(argv[++i]);
         } else if (arg == "-v") {
             verbose = true;
+        } else if (arg == "--missing-only") {
+            missing_only = true;
         } else {
             for (uint32_t cp : to_cps(arg))
                 targets.push_back(cp_to_utf8(cp));
@@ -400,7 +418,7 @@ int main(int argc, char** argv)
     }
 
     if (targets.empty()) {
-        std::cerr << "usage: dictmatch [-v] [-l min-count] [-d dict-db] [-j JMdict-db] <kanji> [kanji ...]\n";
+        std::cerr << "usage: dictmatch [--missing-only] [-v] [-l min-count] [-d dict-db] [-j JMdict-db] <kanji> [kanji ...]\n";
         return 2;
     }
 
@@ -430,7 +448,7 @@ int main(int argc, char** argv)
     std::map<std::string, std::vector<std::string>> all_readings = load_all_readings(db);
     bool has_issue = false;
     for (const auto& target : targets)
-        has_issue = run_target(db, target, all_readings, verbose, min_count) || has_issue;
+        has_issue = run_target(db, target, all_readings, verbose, min_count, missing_only) || has_issue;
 
     sqlite3_close(db);
     return has_issue ? 1 : 0;

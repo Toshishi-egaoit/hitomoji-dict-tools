@@ -6,6 +6,7 @@ kdic2.small.xml
 !create.sql
 !jmdict/create.sql
 !jmdict/p1/create-p1.sql
+!jmdict/p3/create-p3.sql
 **/*.db
 **/*.xml
 **/*.csv
