@@ -67,26 +67,6 @@ create view y as
 		  and y_exclude.yomi = y_base.yomi
 	)
 	union
-	select distinct letter, k.cp, 'on', yomi
-	from y_dakuon
-	  inner join k on k.cp = y_dakuon.cp
-	where not exists (
-		select 1 from y_exclude
-		where y_exclude.cp = y_dakuon.cp
-		  and y_exclude.tp = 'on'
-		  and y_exclude.yomi = y_dakuon.yomi
-	)
-	union
-	select distinct letter, k.cp, 'on', yomi
-	from y_jmdict
-	  inner join k on k.cp = y_jmdict.cp
-	where not exists (
-		select 1 from y_exclude
-		where y_exclude.cp = y_jmdict.cp
-		  and y_exclude.tp = 'on'
-		  and y_exclude.yomi = y_jmdict.yomi
-	)
-	union
 	select distinct letter, k.cp, 'on', yomi from y_g1 inner join k on k.cp = y_g1.cp
 	union
 	select distinct letter, k.cp, 'on', yomi from y_g2 inner join k on k.cp = y_g2.cp
