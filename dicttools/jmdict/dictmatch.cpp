@@ -7,6 +7,7 @@
 #include <map>
 #include <set>
 #include <sqlite3.h>
+#include <stdint.h>
 #include <string>
 #include <sys/stat.h>
 #include <vector>

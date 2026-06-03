@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 DB=../dict.db
 
@@ -9,4 +9,3 @@ begin;
 commit;
 select 'unreg_yomi=', count(*) from y_jmdict;
 EEOOFF
-

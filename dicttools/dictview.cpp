@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <cstdlib>
+#include <stdint.h>
 
 // =========================
 // Structs
@@ -292,5 +293,3 @@ int main(int argc, char* argv[])
 
     return 0;
 }
-
-

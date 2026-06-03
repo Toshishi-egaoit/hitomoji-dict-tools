@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # JMdictを用いて、未登録の読みリストをSQL化するスクリプト
 # usage make_sql.sh SOURCE 

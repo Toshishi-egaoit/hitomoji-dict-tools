@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # JMdictで使用例が見つからない読みをy_excludeに登録するSQLを生成する。
 # usage: exclude_no_evidence_yomi.sh [-n] [-d DB] [-j JMdict-db] "XPATH STRING"

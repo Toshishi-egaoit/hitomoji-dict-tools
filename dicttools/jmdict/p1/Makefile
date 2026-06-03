@@ -43,6 +43,9 @@ gjo.tsv: list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(KDB)
 $(P1FILTER): p1filter.cpp
 	g++ $< -o $@ -lsqlite3
 
+$(DICTMATCH):
+	$(MAKE) -C .. dictmatch
+
 %.accept.tsv: %.tsv $(P1FILTER)
 	./$(P1FILTER) -d $(KDB) -r $(P1_FILTER) < $< > $@
 

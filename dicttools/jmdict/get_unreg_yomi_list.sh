@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # JMdictを用いて、未登録の読みを検索するスクリプト
 # usage get_unreg_yomi_list.sh [-l LIMIT] "XPATH STRING"

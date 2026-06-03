@@ -6,6 +6,7 @@
 #include <map>
 #include <fstream>
 #include <cstring>
+#include <stdint.h>
 #include <sqlite3.h>
 
 constexpr int MAX_SLOT = 120;

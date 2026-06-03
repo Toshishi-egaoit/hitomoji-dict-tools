@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # kdic-small.xml からsqlを生成するスクリプト
 # 使用するツールは以下の通り。
 # * xmlstarlet
@@ -83,4 +83,3 @@ define(FUNC, insert into y_base ( cp , tp , yomi, okuri ) values ( 0x$4, '$5' , 
 EEOOFF
 
 m4 macro_y.m4 $SOURCE.m4  > $SOURCE.y.sql
-

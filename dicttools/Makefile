@@ -14,7 +14,7 @@ viewtest: hitomoji.dic dictview
 jmdict/add_unreg_yomi.sql:
 	(cd jmdict ; make add_unreg_yomi.sql)
 
-jmdict/jm_k.tsv jmdict/jm_r.tsv jmdict/jm_restr.tsv: jmdict/JMdict.xml jmdict/make_jmdict_tsv.sh
+jmdict/jm_k.tsv jmdict/jm_r.tsv jmdict/jm_restr.tsv: archive/JMdict.xml jmdict/make_jmdict_tsv.sh
 	(cd jmdict ; ./make_jmdict_tsv.sh)
 
 jmdict/jmdict.db: jmdict/jm_k.tsv jmdict/jm_r.tsv jmdict/jm_restr.tsv jmdict/create.sql jmdict/make_jmdict_db.sh

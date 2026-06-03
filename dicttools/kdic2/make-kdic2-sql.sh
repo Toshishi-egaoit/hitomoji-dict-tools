@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # kdic2.small.xml から kdic2 フェーズ用の SQL を生成する。
 
 if [ "$1" = "" ] ; then

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 DB=dict-jmdict-p1.db
 JMDB=../jmdict.db

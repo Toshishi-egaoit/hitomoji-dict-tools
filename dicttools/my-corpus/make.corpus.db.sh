@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # 入力ソースから各文字の使用回数を求める 
 grep -oP '[\x{4E00}-\x{9FFF}]' < source.txt > corpus.base
@@ -27,4 +27,3 @@ begin;
 .read corpus.sql
 commit;
 EEOOFF
-

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # yomi.daku.tsv ファイルをy_dakuonのにinsertするSQLに変換する。
 # 使用するツールは以下の通り。
 # * sed
