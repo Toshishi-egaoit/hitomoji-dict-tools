@@ -1,24 +1,21 @@
 # jmdict/p2
 
-JMdict を使って、KANJIDIC2 由来の読みだけでは不足する読みを人手で追加登録する
-フェーズです。
+JMdict を使って、KANJIDIC2 由来の読みのうち、現代語での使用例が確認できない
+読みを機械的に除外するフェーズです。
 
-このフェーズでは、`p1` を適用した後の DB を入力にして、使用頻度が低い読みや
-踏み外しの可能性が高い読みを抽出します。抽出された候補は人間が確認し、
-採用・不採用の判断結果を正式な入力ファイルとして残します。
+このフェーズは追加フェーズではありません。`p1` を適用した後の DB を入力にして、
+JMdict に使用例が見つからない読みを `y_exclude` に登録します。
 
 ## 入力
 
 - `../p1/dict-jmdict-p1.db`
 - `../jmdict.db`
 - JMdict 突合ツール
-- 人手で管理する採用・不採用ファイル
 
 ## 中間生成物
 
-- `manual-register-candidates.tsv`
-- `accepted-yomi.tsv`
-- `rejected-yomi.tsv`
+- `exclude-candidates.tsv`
+- `exclude.sql`
 
 ## 生成物
 
@@ -26,8 +23,7 @@ JMdict を使って、KANJIDIC2 由来の読みだけでは不足する読みを
 
 ## 方針
 
-- `manual-register-candidates.tsv` は機械生成の候補リストです。
-- `accepted-yomi.tsv` と `rejected-yomi.tsv` は人手で管理する判断結果です。
-- 現在の `g*.choice` や `g8.list.addendum` に相当する内容は、
-  将来的にこのフェーズの人手管理ファイルへ整理します。
-- `dict-jmdict-p2.db` は `dict-jmdict-p1.db` に採用済みの読みを反映した中間 DB です。
+- このフェーズは、再現可能な機械処理だけで完結させます。
+- 人手による採用・不採用判断は置きません。
+- `dict-jmdict-p2.db` は `dict-jmdict-p1.db` に機械的な除外結果を反映した中間 DB です。
+- 人手での追加判断は `../p3/` で扱います。
