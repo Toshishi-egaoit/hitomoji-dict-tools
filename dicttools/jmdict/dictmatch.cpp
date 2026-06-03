@@ -259,78 +259,20 @@ static bool file_exists(const std::string& path)
     return stat(path.c_str(), &st) == 0;
 }
 
-int main(int argc, char** argv)
+static bool run_target(sqlite3* db,
+                       const std::string& target,
+                       const std::map<std::string, std::vector<std::string>>& all_readings,
+                       bool verbose,
+                       int min_count)
 {
-    std::string dict_db = "../dict.db";
-    std::string jmdict_db = "jmdict.db";
-    std::string target;
-    bool verbose = false;
-    int min_count = 0;
-
-    for (int i = 1; i < argc; ++i) {
-        std::string arg = argv[i];
-        if (arg == "-d") {
-            if (option_value_missing(argc, argv, i)) {
-                std::cerr << "ERROR\t-d requires dict-db\n";
-                return 2;
-            }
-            dict_db = argv[++i];
-        } else if (arg == "-j") {
-            if (option_value_missing(argc, argv, i)) {
-                std::cerr << "ERROR\t-j requires JMdict-db\n";
-                return 2;
-            }
-            jmdict_db = argv[++i];
-        } else if (arg == "-l") {
-            if (option_value_missing(argc, argv, i)) {
-                std::cerr << "ERROR\t-l requires min-count\n";
-                return 2;
-            }
-            min_count = std::stoi(argv[++i]);
-        } else if (arg == "-v") {
-            verbose = true;
-        } else {
-            target = arg;
-        }
-    }
-
-    if (target.empty()) {
-        std::cerr << "usage: dictmatch [-v] [-l min-count] [-d dict-db] [-j JMdict-db] <kanji>\n";
-        return 2;
-    }
-
     std::vector<uint32_t> target_cps = to_cps(target);
     if (target_cps.size() != 1) {
         std::cerr << "ERROR\ttarget must be one character\t" << target << "\n";
-        return 2;
+        return true;
     }
     uint32_t target_cp = target_cps[0];
 
-    if (!file_exists(dict_db)) {
-        std::cerr << "ERROR\tdict db does not exist\t" << dict_db << "\n";
-        return 2;
-    }
-
-    if (!file_exists(jmdict_db)) {
-        std::cerr << "ERROR\tJMdict db does not exist\t" << jmdict_db << "\n";
-        return 2;
-    }
-
-    sqlite3* db = nullptr;
-    if (sqlite3_open_v2(dict_db.c_str(), &db, SQLITE_OPEN_READONLY, nullptr) != SQLITE_OK) {
-        std::cerr << "ERROR\tcannot open db\t" << dict_db << "\n";
-        return 2;
-    }
-
-    std::string attach = "attach database '" + jmdict_db + "' as jm";
-    if (sqlite3_exec(db, attach.c_str(), nullptr, nullptr, nullptr) != SQLITE_OK) {
-        std::cerr << "ERROR\tcannot attach jmdict db\t" << jmdict_db << "\n";
-        sqlite3_close(db);
-        return 2;
-    }
-
     std::vector<Reading> target_readings = load_target_readings(db, target);
-    std::map<std::string, std::vector<std::string>> all_readings = load_all_readings(db);
     std::set<std::string> existing;
     for (const auto& r : target_readings)
         existing.insert(r.yomi);
@@ -417,6 +359,78 @@ int main(int argc, char** argv)
         }
         print_examples(p.first, candidate_examples[p.first], missing);
     }
+
+    return has_issue;
+}
+
+int main(int argc, char** argv)
+{
+    std::string dict_db = "../dict.db";
+    std::string jmdict_db = "jmdict.db";
+    std::vector<std::string> targets;
+    bool verbose = false;
+    int min_count = 0;
+
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        if (arg == "-d") {
+            if (option_value_missing(argc, argv, i)) {
+                std::cerr << "ERROR\t-d requires dict-db\n";
+                return 2;
+            }
+            dict_db = argv[++i];
+        } else if (arg == "-j") {
+            if (option_value_missing(argc, argv, i)) {
+                std::cerr << "ERROR\t-j requires JMdict-db\n";
+                return 2;
+            }
+            jmdict_db = argv[++i];
+        } else if (arg == "-l") {
+            if (option_value_missing(argc, argv, i)) {
+                std::cerr << "ERROR\t-l requires min-count\n";
+                return 2;
+            }
+            min_count = std::stoi(argv[++i]);
+        } else if (arg == "-v") {
+            verbose = true;
+        } else {
+            for (uint32_t cp : to_cps(arg))
+                targets.push_back(cp_to_utf8(cp));
+        }
+    }
+
+    if (targets.empty()) {
+        std::cerr << "usage: dictmatch [-v] [-l min-count] [-d dict-db] [-j JMdict-db] <kanji> [kanji ...]\n";
+        return 2;
+    }
+
+    if (!file_exists(dict_db)) {
+        std::cerr << "ERROR\tdict db does not exist\t" << dict_db << "\n";
+        return 2;
+    }
+
+    if (!file_exists(jmdict_db)) {
+        std::cerr << "ERROR\tJMdict db does not exist\t" << jmdict_db << "\n";
+        return 2;
+    }
+
+    sqlite3* db = nullptr;
+    if (sqlite3_open_v2(dict_db.c_str(), &db, SQLITE_OPEN_READONLY, nullptr) != SQLITE_OK) {
+        std::cerr << "ERROR\tcannot open db\t" << dict_db << "\n";
+        return 2;
+    }
+
+    std::string attach = "attach database '" + jmdict_db + "' as jm";
+    if (sqlite3_exec(db, attach.c_str(), nullptr, nullptr, nullptr) != SQLITE_OK) {
+        std::cerr << "ERROR\tcannot attach jmdict db\t" << jmdict_db << "\n";
+        sqlite3_close(db);
+        return 2;
+    }
+
+    std::map<std::string, std::vector<std::string>> all_readings = load_all_readings(db);
+    bool has_issue = false;
+    for (const auto& target : targets)
+        has_issue = run_target(db, target, all_readings, verbose, min_count) || has_issue;
 
     sqlite3_close(db);
     return has_issue ? 1 : 0;

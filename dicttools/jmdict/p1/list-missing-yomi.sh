@@ -38,8 +38,11 @@ if [ "$WHERE" = "" ] ; then
 	exit 1
 fi
 
-sqlite3 -noheader "$DB" "select letter from k where $WHERE order by grade, cp" |
-  while read CHAR; do
-	../dictmatch -l "$LIMIT" -d "$DB" -j "$JMDB" "$CHAR" 2>&1 >/dev/null |
-	awk -F '\t' -v limit="$LIMIT" '$1=="MISSING_CANDIDATE" && $4 >= limit'
-  done
+CHARS=$(sqlite3 -noheader "$DB" "select group_concat(letter, '') from (select letter from k where $WHERE order by grade, cp)")
+
+if [ "$CHARS" = "" ] ; then
+	exit 0
+fi
+
+../dictmatch -l "$LIMIT" -d "$DB" -j "$JMDB" "$CHARS" 2>&1 >/dev/null |
+  awk -F '\t' -v limit="$LIMIT" '$1=="MISSING_CANDIDATE" && $4 >= limit'
