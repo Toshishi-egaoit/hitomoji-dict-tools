@@ -19,29 +19,29 @@ $(DB): $(KDB) create-p1.sql $(STAGES:%=%.sql)
 	sqlite3 $@ < create-p1.sql
 	for s in $(STAGES); do sqlite3 $@ < $$s.sql; done
 
-g1.tsv: list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(KDB)
-	./list-missing-yomi.sh -d $(KDB) -j $(JMDB) -l $(P1_LIMIT) -w 'grade = 1' > $@
+g1.tsv: ../list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(KDB)
+	bash ../list-missing-yomi.sh -d $(KDB) -j $(JMDB) -l $(P1_LIMIT) -w 'grade = 1' > $@
 
-g2.tsv: list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(KDB)
-	./list-missing-yomi.sh -d $(KDB) -j $(JMDB) -l $(P1_LIMIT) -w 'grade = 2' > $@
+g2.tsv: ../list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(KDB)
+	bash ../list-missing-yomi.sh -d $(KDB) -j $(JMDB) -l $(P1_LIMIT) -w 'grade = 2' > $@
 
-g3.tsv: list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(KDB)
-	./list-missing-yomi.sh -d $(KDB) -j $(JMDB) -l $(P1_LIMIT) -w 'grade = 3' > $@
+g3.tsv: ../list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(KDB)
+	bash ../list-missing-yomi.sh -d $(KDB) -j $(JMDB) -l $(P1_LIMIT) -w 'grade = 3' > $@
 
-g4.tsv: list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(KDB)
-	./list-missing-yomi.sh -d $(KDB) -j $(JMDB) -l $(P1_LIMIT) -w 'grade = 4' > $@
+g4.tsv: ../list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(KDB)
+	bash ../list-missing-yomi.sh -d $(KDB) -j $(JMDB) -l $(P1_LIMIT) -w 'grade = 4' > $@
 
-g5.tsv: list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(KDB)
-	./list-missing-yomi.sh -d $(KDB) -j $(JMDB) -l $(P1_LIMIT) -w 'grade = 5' > $@
+g5.tsv: ../list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(KDB)
+	bash ../list-missing-yomi.sh -d $(KDB) -j $(JMDB) -l $(P1_LIMIT) -w 'grade = 5' > $@
 
-g6.tsv: list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(KDB)
-	./list-missing-yomi.sh -d $(KDB) -j $(JMDB) -l $(P1_LIMIT) -w 'grade = 6' > $@
+g6.tsv: ../list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(KDB)
+	bash ../list-missing-yomi.sh -d $(KDB) -j $(JMDB) -l $(P1_LIMIT) -w 'grade = 6' > $@
 
-gjo.tsv: list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(KDB)
-	./list-missing-yomi.sh -d $(KDB) -j $(JMDB) -l $(P1_LIMIT) -w 'grade = 8' > $@
+gjo.tsv: ../list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(KDB)
+	bash ../list-missing-yomi.sh -d $(KDB) -j $(JMDB) -l $(P1_LIMIT) -w 'grade = 8' > $@
 
-gjin.tsv: list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(KDB)
-	./list-missing-yomi.sh -d $(KDB) -j $(JMDB) -l $(P1_LIMIT) -w 'grade in (9, 10)' > $@
+gjin.tsv: ../list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(KDB)
+	bash ../list-missing-yomi.sh -d $(KDB) -j $(JMDB) -l $(P1_LIMIT) -w 'grade in (9, 10)' > $@
 
 $(P1FILTER): p1filter.cpp
 	g++ $< -o $@ -lsqlite3

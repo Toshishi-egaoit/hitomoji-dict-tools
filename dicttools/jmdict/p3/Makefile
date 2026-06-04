@@ -21,29 +21,29 @@ $(DB): $(P2DB) create-p3.sql $(STAGES:%=%.sql)
 	sqlite3 $@ < create-p3.sql
 	for s in $(STAGES); do sqlite3 $@ < $$s.sql; done
 
-g1.tsv: list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(P2DB)
-	./list-missing-yomi.sh -d $(P2DB) -j $(JMDB) -l $(P3_LIMIT) -w 'grade = 1' > $@
+g1.tsv: ../list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(P2DB)
+	bash ../list-missing-yomi.sh -d $(P2DB) -j $(JMDB) -l $(P3_LIMIT) -w 'grade = 1' > $@
 
-g2.tsv: list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(P2DB)
-	./list-missing-yomi.sh -d $(P2DB) -j $(JMDB) -l $(P3_LIMIT) -w 'grade = 2' > $@
+g2.tsv: ../list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(P2DB)
+	bash ../list-missing-yomi.sh -d $(P2DB) -j $(JMDB) -l $(P3_LIMIT) -w 'grade = 2' > $@
 
-g3.tsv: list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(P2DB)
-	./list-missing-yomi.sh -d $(P2DB) -j $(JMDB) -l $(P3_LIMIT) -w 'grade = 3' > $@
+g3.tsv: ../list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(P2DB)
+	bash ../list-missing-yomi.sh -d $(P2DB) -j $(JMDB) -l $(P3_LIMIT) -w 'grade = 3' > $@
 
-g4.tsv: list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(P2DB)
-	./list-missing-yomi.sh -d $(P2DB) -j $(JMDB) -l $(P3_LIMIT) -w 'grade = 4' > $@
+g4.tsv: ../list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(P2DB)
+	bash ../list-missing-yomi.sh -d $(P2DB) -j $(JMDB) -l $(P3_LIMIT) -w 'grade = 4' > $@
 
-g5.tsv: list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(P2DB)
-	./list-missing-yomi.sh -d $(P2DB) -j $(JMDB) -l $(P3_LIMIT) -w 'grade = 5' > $@
+g5.tsv: ../list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(P2DB)
+	bash ../list-missing-yomi.sh -d $(P2DB) -j $(JMDB) -l $(P3_LIMIT) -w 'grade = 5' > $@
 
-g6.tsv: list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(P2DB)
-	./list-missing-yomi.sh -d $(P2DB) -j $(JMDB) -l $(P3_LIMIT) -w 'grade = 6' > $@
+g6.tsv: ../list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(P2DB)
+	bash ../list-missing-yomi.sh -d $(P2DB) -j $(JMDB) -l $(P3_LIMIT) -w 'grade = 6' > $@
 
-gjo.tsv: list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(P2DB)
-	./list-missing-yomi.sh -d $(P2DB) -j $(JMDB) -l $(P3_LIMIT) -w 'grade = 8' > $@
+gjo.tsv: ../list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(P2DB)
+	bash ../list-missing-yomi.sh -d $(P2DB) -j $(JMDB) -l $(P3_LIMIT) -w 'grade = 8' > $@
 
-gjin.tsv: list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(P2DB)
-	./list-missing-yomi.sh -d $(P2DB) -j $(JMDB) -l $(P3_LIMIT) -w 'grade in (9, 10)' > $@
+gjin.tsv: ../list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(P2DB)
+	bash ../list-missing-yomi.sh -d $(P2DB) -j $(JMDB) -l $(P3_LIMIT) -w 'grade in (9, 10)' > $@
 
 $(DICTMATCH):
 	$(MAKE) -C .. dictmatch
