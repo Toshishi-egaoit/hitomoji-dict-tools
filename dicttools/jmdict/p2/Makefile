@@ -1,5 +1,6 @@
 DB = dict-jmdict-p2.db
 P1DB = ../p1/dict-jmdict-p1.db
+KDB = ../../kdic2/dict-kdic2.db
 JMDB = ../jmdict.db
 DICTMATCH = ../dictmatch
 
@@ -15,11 +16,11 @@ $(DB): $(P1DB) $(STAGES:%=ex-%.sql)
 	cp $(P1DB) $@
 	for s in $(STAGES); do sqlite3 $@ < ex-$$s.sql; done
 
-ex-gkyo.tsv: list-no-evidence-yomi.sh $(DICTMATCH) $(JMDB) $(P1DB)
-	./list-no-evidence-yomi.sh -d $(P1DB) -j $(JMDB) -w 'grade between 1 and 6' > $@
+ex-gkyo.tsv: list-no-evidence-yomi.sh $(DICTMATCH) $(JMDB) $(KDB)
+	./list-no-evidence-yomi.sh -d $(KDB) -j $(JMDB) -w 'grade between 1 and 6' > $@
 
-ex-gjo.tsv: list-no-evidence-yomi.sh $(DICTMATCH) $(JMDB) $(P1DB)
-	./list-no-evidence-yomi.sh -d $(P1DB) -j $(JMDB) -w 'grade = 8' > $@
+ex-gjo.tsv: list-no-evidence-yomi.sh $(DICTMATCH) $(JMDB) $(KDB)
+	./list-no-evidence-yomi.sh -d $(KDB) -j $(JMDB) -w 'grade = 8' > $@
 
 $(DICTMATCH):
 	$(MAKE) -C .. dictmatch

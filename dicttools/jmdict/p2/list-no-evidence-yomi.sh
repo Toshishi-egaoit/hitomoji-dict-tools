@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DB=../p1/dict-jmdict-p1.db
+DB=../../kdic2/dict-kdic2.db
 JMDB=../jmdict.db
 WHERE=
 
