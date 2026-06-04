@@ -4,6 +4,10 @@ P2DB = ../p2/dict-jmdict-p2.db
 JMDB = ../jmdict.db
 DICTMATCH = ../dictmatch
 
+# Editor for editing g*.tsv into g*.accept.tsv.
+# CAUTION: If you change this editor, update the +saveas command in edit-% too.
+VIM = vim
+
 STAGES = g1 g2 g3 g4 g5 g6 gjo gjin
 
 .PHONY: all clean clean-tsv counts
@@ -46,7 +50,12 @@ $(DICTMATCH):
 
 %.accept.tsv: %.tsv
 	@echo "You MUST edit $< into $@" >&2
+	@echo "Run: make edit-$*" >&2
 	@false
+
+edit-%: %.tsv
+	$(VIM) $< +'saveas $*.accept.tsv'
+	test -f $*.accept.tsv
 
 %.sql: %.accept.tsv make-p3-sql.sh
 	./make-p3-sql.sh $* < $< > $@
