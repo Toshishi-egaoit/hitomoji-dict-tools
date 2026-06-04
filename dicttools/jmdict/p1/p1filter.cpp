@@ -12,8 +12,10 @@
 
 struct RuleOptions {
     bool onbin = true;
+    bool okuri = false;
     bool renyo = false;
     bool renyo_ru = false;
+    bool renyo_ichidan_e = false;
     bool renyo_rendaku = false;
 };
 
@@ -198,6 +200,35 @@ static bool renyo_ru_candidate(const std::string& yomi, const std::string& okuri
     return true;
 }
 
+static bool is_e_dan(uint32_t cp)
+{
+    return cp == U'え' || cp == U'け' || cp == U'げ' || cp == U'せ' || cp == U'ぜ' ||
+           cp == U'て' || cp == U'で' || cp == U'ね' || cp == U'へ' || cp == U'べ' ||
+           cp == U'ぺ' || cp == U'め' || cp == U'れ';
+}
+
+static bool renyo_ichidan_e_candidate(const std::string& yomi, const std::string& okuri, std::string& out)
+{
+    std::vector<uint32_t> okuri_cps = to_cps(kata_to_hira(okuri));
+    if (okuri_cps.size() < 2 || okuri_cps.back() != U'る')
+        return false;
+    if (!is_e_dan(okuri_cps[okuri_cps.size() - 2]))
+        return false;
+
+    okuri_cps.pop_back();
+    out = kata_to_hira(yomi) + cps_to_string(okuri_cps);
+    return true;
+}
+
+static bool okuri_candidate(const std::string& yomi, const std::string& okuri, std::string& out)
+{
+    if (okuri.empty())
+        return false;
+
+    out = kata_to_hira(yomi) + kata_to_hira(okuri);
+    return true;
+}
+
 static std::set<std::string> load_readings(sqlite3* db, const std::string& letter)
 {
     std::set<std::string> out;
@@ -220,6 +251,7 @@ static std::set<std::string> load_renyo_readings(
     const std::string& letter,
     bool include_regular,
     bool include_ru,
+    bool include_ichidan_e,
     bool include_rendaku)
 {
     std::set<std::string> out;
@@ -252,6 +284,37 @@ static std::set<std::string> load_renyo_readings(
             if (handakuonize_head(derived, voiced))
                 out.insert(voiced);
         }
+        if (include_ichidan_e && renyo_ichidan_e_candidate(yomi, okuri, derived))
+            out.insert(derived);
+        if (include_rendaku && renyo_ichidan_e_candidate(yomi, okuri, derived)) {
+            std::string voiced;
+            if (dakuonize_head(derived, voiced))
+                out.insert(voiced);
+            if (handakuonize_head(derived, voiced))
+                out.insert(voiced);
+        }
+    }
+
+    sqlite3_finalize(stmt);
+    return out;
+}
+
+static std::set<std::string> load_okuri_readings(sqlite3* db, const std::string& letter)
+{
+    std::set<std::string> out;
+    sqlite3_stmt* stmt = nullptr;
+    const char* sql = "select distinct yomi, okuri from y_base where okuri is not null and okuri != '' and cp = (select cp from k where letter=?)";
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK)
+        return out;
+
+    sqlite3_bind_text(stmt, 1, letter.c_str(), -1, SQLITE_TRANSIENT);
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        std::string yomi = (const char*)sqlite3_column_text(stmt, 0);
+        std::string okuri = (const char*)sqlite3_column_text(stmt, 1);
+        std::string derived;
+        if (okuri_candidate(yomi, okuri, derived))
+            out.insert(derived);
     }
 
     sqlite3_finalize(stmt);
@@ -275,29 +338,38 @@ static bool accepted_by_onbin_rule(const std::set<std::string>& readings, const 
 static bool parse_rules(const std::string& text, RuleOptions& options)
 {
     options.onbin = false;
+    options.okuri = false;
     options.renyo = false;
     options.renyo_ru = false;
+    options.renyo_ichidan_e = false;
     options.renyo_rendaku = false;
 
     for (const auto& rule : split_comma(text)) {
         if (rule == "onbin") {
             options.onbin = true;
+        } else if (rule == "okuri") {
+            options.okuri = true;
         } else if (rule == "renyo") {
             options.renyo = true;
         } else if (rule == "renyo-ru") {
             options.renyo_ru = true;
+        } else if (rule == "renyo-ichidan-e") {
+            options.renyo_ichidan_e = true;
         } else if (rule == "renyo-rendaku") {
             options.renyo_rendaku = true;
         } else if (rule == "all") {
             options.onbin = true;
+            options.okuri = true;
             options.renyo = true;
             options.renyo_ru = true;
+            options.renyo_ichidan_e = true;
             options.renyo_rendaku = true;
         } else {
             return false;
         }
     }
-    return options.onbin || options.renyo || options.renyo_ru || options.renyo_rendaku;
+    return options.onbin || options.okuri || options.renyo || options.renyo_ru ||
+           options.renyo_ichidan_e || options.renyo_rendaku;
 }
 
 int main(int argc, char** argv)
@@ -312,12 +384,12 @@ int main(int argc, char** argv)
         else if (arg == "-r" && i + 1 < argc) {
             if (!parse_rules(argv[++i], rules)) {
                 std::cerr << "ERROR\tunknown p1filter rule\n";
-                std::cerr << "usage: p1filter [-d DB] [-r onbin|renyo|renyo-ru|renyo-rendaku|all] < raw.tsv > accept.tsv\n";
+                std::cerr << "usage: p1filter [-d DB] [-r onbin|okuri|renyo|renyo-ru|renyo-ichidan-e|renyo-rendaku|all] < raw.tsv > accept.tsv\n";
                 return 2;
             }
         }
         else {
-            std::cerr << "usage: p1filter [-d DB] [-r onbin|renyo|renyo-ru|renyo-rendaku|all] < raw.tsv > accept.tsv\n";
+            std::cerr << "usage: p1filter [-d DB] [-r onbin|okuri|renyo|renyo-ru|renyo-ichidan-e|renyo-rendaku|all] < raw.tsv > accept.tsv\n";
             return 2;
         }
     }
@@ -330,6 +402,7 @@ int main(int argc, char** argv)
 
     std::string line;
     std::map<std::string, std::set<std::string>> reading_cache;
+    std::map<std::string, std::set<std::string>> okuri_cache;
     std::map<std::string, std::set<std::string>> renyo_cache;
     while (std::getline(std::cin, line)) {
         std::vector<std::string> fields = split_tab(line);
@@ -348,13 +421,22 @@ int main(int argc, char** argv)
             accepted = accepted_by_onbin_rule(it->second, candidate);
         }
 
-        if (!accepted && (rules.renyo || rules.renyo_ru || rules.renyo_rendaku)) {
+        if (!accepted && (rules.renyo || rules.renyo_ru || rules.renyo_ichidan_e || rules.renyo_rendaku)) {
             auto it = renyo_cache.find(letter);
             if (it == renyo_cache.end())
                 it = renyo_cache.insert({
                     letter,
-                    load_renyo_readings(db, letter, rules.renyo, rules.renyo_ru, rules.renyo_rendaku)
+                    load_renyo_readings(db, letter, rules.renyo, rules.renyo_ru,
+                                        rules.renyo_ichidan_e, rules.renyo_rendaku)
                 }).first;
+
+            accepted = it->second.find(candidate) != it->second.end();
+        }
+
+        if (!accepted && rules.okuri) {
+            auto it = okuri_cache.find(letter);
+            if (it == okuri_cache.end())
+                it = okuri_cache.insert({letter, load_okuri_readings(db, letter)}).first;
 
             accepted = it->second.find(candidate) != it->second.end();
         }

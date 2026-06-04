@@ -34,7 +34,7 @@ JMdict を使って、KANJIDIC2 由来の読みだけでは不足する読みを
 - このフェーズは、再現可能な機械処理だけで完結させます。
 - 人手による採用・不採用判断は置きません。
 - `P1_LIMIT` の既定値は `5` とします。
-- `P1_FILTER` の既定値は `onbin,renyo,renyo-ru,renyo-rendaku` とします。
+- `P1_FILTER` の既定値は `onbin,okuri,renyo,renyo-ru,renyo-ichidan-e,renyo-rendaku` とします。
 - 対象は `g1` から `g6`、`gjo`、`gjin` です。
 - 人名用漢字の `gjin` も、p1 フィルタを通過した安全な候補だけを自動登録します。
 - 候補抽出と p1 フィルタは、常に `../../kdic2/dict-kdic2.db` を基準に行います。
@@ -42,12 +42,16 @@ JMdict を使って、KANJIDIC2 由来の読みだけでは不足する読みを
 - 自動登録する候補は、既存読みから標準的な音便として説明できるものに限定します。
   初期ルールでは、末尾の `つ`/`ち`/`く` の促音化、語頭の濁音化、語頭の半濁音化だけを
   採用します。
+- `P1_FILTER=okuri` を指定すると、`y_base` の `yomi` と `okuri` を連結した読みだけを
+  採用します。たとえば `う.け` から `うけ` を採用できます。
 - `P1_FILTER=renyo` を指定すると、`y_base` の送り仮名から導出できる連用形だけを採用します。
   `renyo` では `る` の連用形は扱いません。
 - `P1_FILTER=renyo-ru` を指定すると、送り仮名 `る` から導出できる `り` 形だけを採用します。
+- `P1_FILTER=renyo-ichidan-e` を指定すると、`え段 + る` で終わる送り仮名から、
+  下一段の連用形を採用します。たとえば `う.ける` から `うけ` を採用できます。
 - `P1_FILTER=renyo-rendaku` を指定すると、連用形を作った後に語頭の濁音化・半濁音化を
   適用した候補だけを採用します。
-- `P1_FILTER=onbin,renyo` や `P1_FILTER=onbin,renyo,renyo-ru,renyo-rendaku` で
+- `P1_FILTER=onbin,renyo` や `P1_FILTER=onbin,okuri,renyo,renyo-ru,renyo-ichidan-e,renyo-rendaku` で
   複数のフィルタを有効にできます。`P1_FILTER=all` はすべてのフィルタを有効にします。
 - TSV はキャッシュとして扱います。条件を変えて再抽出したい場合は、対象 TSV を削除するか
   `make clean-tsv` を使います。

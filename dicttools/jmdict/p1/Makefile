@@ -1,5 +1,5 @@
 P1_LIMIT ?= 5
-P1_FILTER ?= onbin,renyo,renyo-ru,renyo-rendaku
+P1_FILTER ?= onbin,okuri,renyo,renyo-ru,renyo-ichidan-e,renyo-rendaku
 DB = dict-jmdict-p1.db
 KDB = ../../kdic2/dict-kdic2.db
 JMDB = ../jmdict.db
