@@ -5,7 +5,7 @@ JMDB = ../jmdict.db
 DICTMATCH = ../dictmatch
 
 # Editor for editing g*.tsv into g*.accept.tsv.
-# CAUTION: If you change this editor, update the +saveas command in edit-% too.
+# CAUTION: If you change this editor, update the commands in edit-% too.
 VIM = vim
 
 STAGES = g1 g2 g3 g4 g5 g6 gjo gjin
@@ -53,8 +53,17 @@ $(DICTMATCH):
 	@echo "Run: make edit-$*" >&2
 	@false
 
-edit-%: %.tsv
-	$(VIM) $< +'saveas $*.accept.tsv'
+edit-%:
+	@if [ -f $*.accept.tsv ] && { [ ! -f $*.tsv ] || [ $*.accept.tsv -nt $*.tsv ]; }; then \
+		$(VIM) $*.accept.tsv; \
+	elif [ -f $*.accept.tsv ]; then \
+		echo "$*.accept.tsv exists but is older than $*.tsv" >&2; \
+		echo "Inspect both files before replacing the accept file." >&2; \
+		exit 1; \
+	else \
+		$(MAKE) $*.tsv; \
+		$(VIM) $*.tsv +'saveas $*.accept.tsv'; \
+	fi
 	test -f $*.accept.tsv
 
 %.sql: %.accept.tsv make-p3-sql.sh
