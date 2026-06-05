@@ -116,7 +116,7 @@ static bool sokuonize(const std::string& base, std::string& out)
         return false;
 
     uint32_t& last = cps.back();
-    if (last == U'つ' || last == U'ち' || last == U'く') {
+    if (last == U'つ' || last == U'ち' || last == U'き' || last == U'く') {
         last = U'っ';
         out = cps_to_string(cps);
         return true;
