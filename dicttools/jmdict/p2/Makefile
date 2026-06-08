@@ -6,7 +6,7 @@ DICTMATCH = ../dictmatch
 
 STAGES = gkyo gjo
 
-.PHONY: all clean clean-tsv counts
+.PHONY: all clean counts
 .SECONDARY: $(STAGES:%=ex-%.sql)
 
 all: $(DB)
@@ -36,7 +36,5 @@ counts: $(DB)
 
 clean:
 	rm -f $(DB)
+	rm -f ex-*.tsv
 	rm -f ex-*.sql
-
-clean-tsv:
-	rm -f ex-*.tsv ex-*.sql

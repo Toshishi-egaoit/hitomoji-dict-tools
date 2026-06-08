@@ -8,7 +8,7 @@ P1FILTER = p1filter
 
 STAGES = g1 g2 g3 g4 g5 g6 gjo gjin
 
-.PHONY: all clean clean-tsv counts
+.PHONY: all clean counts
 .SECONDARY: $(STAGES:%=%.accept.tsv) $(STAGES:%=%.sql)
 
 all: $(DB)
@@ -69,9 +69,7 @@ counts: $(DB)
 
 clean:
 	rm -f $(DB)
-	rm -f *.sql
-	rm -f *.accept.tsv
+	rm -f $(STAGES:%=%.tsv)
+	rm -f $(STAGES:%=%.sql)
+	rm -f $(STAGES:%=%.accept.tsv)
 	rm -f $(P1FILTER)
-
-clean-tsv:
-	rm -f *.tsv *.accept.tsv *.sql
