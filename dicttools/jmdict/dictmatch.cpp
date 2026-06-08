@@ -195,17 +195,46 @@ static bool align_one(const std::vector<uint32_t>& keb,
     uint32_t kcp = keb[kpos];
 
     if (kcp == target_cp) {
+        struct Match {
+            std::string segment;
+            std::set<std::string> sub_segments;
+        };
+        std::vector<Match> existing_matches;
+        std::vector<Match> missing_matches;
+        std::string target_letter = cp_to_utf8(target_cp);
+        auto existing = all_readings.find(target_letter);
+
         for (size_t len = 1; len <= 5 && rpos + len <= reb.size(); ++len) {
             if (!all_kana(reb, rpos, len))
                 continue;
 
+            std::string segment = cps_to_string(reb, rpos, len);
             std::set<std::string> sub_segments;
             if (align_one(keb, reb, kpos + 1, rpos + len, target_cp, all_readings, sub_segments)) {
-                target_segments.insert(cps_to_string(reb, rpos, len));
-                target_segments.insert(sub_segments.begin(), sub_segments.end());
-                return true;
+                bool is_existing = existing != all_readings.end() &&
+                                   std::find(existing->second.begin(), existing->second.end(), segment) != existing->second.end();
+                if (is_existing)
+                    existing_matches.push_back({segment, sub_segments});
+                else
+                    missing_matches.push_back({segment, sub_segments});
             }
         }
+
+        if (!existing_matches.empty()) {
+            for (const auto& match : existing_matches) {
+                target_segments.insert(match.segment);
+                target_segments.insert(match.sub_segments.begin(), match.sub_segments.end());
+            }
+            return true;
+        }
+
+        if (!missing_matches.empty()) {
+            const auto& match = missing_matches.front();
+            target_segments.insert(match.segment);
+            target_segments.insert(match.sub_segments.begin(), match.sub_segments.end());
+            return true;
+        }
+
         return false;
     }
 
@@ -215,20 +244,29 @@ static bool align_one(const std::vector<uint32_t>& keb,
         if (it == all_readings.end())
             return false;
 
-        bool matched = false;
-        size_t best_len = 0;
+        std::map<size_t, std::vector<std::vector<uint32_t>>> groups;
         for (const auto& yomi : it->second) {
             std::vector<uint32_t> ycps = to_cps(yomi);
             if (!starts_with(reb, rpos, ycps))
                 continue;
-            if (best_len != 0 && ycps.size() < best_len)
-                break;
 
-            best_len = ycps.size();
-            if (align_one(keb, reb, kpos + 1, rpos + ycps.size(), target_cp, all_readings, target_segments))
-                matched = true;
+            groups[ycps.size()].push_back(ycps);
         }
-        return matched;
+
+        for (auto group = groups.rbegin(); group != groups.rend(); ++group) {
+            bool matched = false;
+            for (const auto& ycps : group->second) {
+                std::set<std::string> sub_segments;
+                if (align_one(keb, reb, kpos + 1, rpos + ycps.size(), target_cp, all_readings, sub_segments)) {
+                    target_segments.insert(sub_segments.begin(), sub_segments.end());
+                    matched = true;
+                }
+            }
+            if (matched)
+                return true;
+        }
+
+        return false;
     }
 
     uint32_t normalized = kata_to_hira_cp(kcp);
