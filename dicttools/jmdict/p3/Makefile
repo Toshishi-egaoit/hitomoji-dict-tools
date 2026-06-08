@@ -1,17 +1,19 @@
 P3_LIMIT ?= 3
+P3_FILTER ?= all
 DB = dict-jmdict-p3.db
 P2DB = ../p2/dict-jmdict-p2.db
 JMDB = ../jmdict.db
 DICTMATCH = ../dictmatch
+P3FILTER = p3filter
 
 # Editor for editing g*.tsv into g*.accept.tsv.
 # CAUTION: If you change this editor, update the commands in edit-% too.
 VIM = vim
 
-STAGES = g1 g2 g3 g4 g5 g6 gjo gjin
+STAGES = g1 g2 g3 g4 g5 g6
 
 .PHONY: all clean clean-tsv counts
-.SECONDARY: $(STAGES:%=%.accept.tsv) $(STAGES:%=%.sql)
+.SECONDARY: $(STAGES:%=%.raw.tsv) $(STAGES:%=%.accept.tsv) $(STAGES:%=%.sql)
 
 all: $(DB)
 
@@ -21,32 +23,36 @@ $(DB): $(P2DB) create-p3.sql $(STAGES:%=%.sql)
 	sqlite3 $@ < create-p3.sql
 	for s in $(STAGES); do sqlite3 $@ < $$s.sql; done
 
-g1.tsv: ../list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(P2DB)
+g1.raw.tsv: ../list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(P2DB)
 	bash ../list-missing-yomi.sh -d $(P2DB) -j $(JMDB) -l $(P3_LIMIT) -w 'grade = 1' > $@
 
-g2.tsv: ../list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(P2DB)
+g2.raw.tsv: ../list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(P2DB)
 	bash ../list-missing-yomi.sh -d $(P2DB) -j $(JMDB) -l $(P3_LIMIT) -w 'grade = 2' > $@
 
-g3.tsv: ../list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(P2DB)
+g3.raw.tsv: ../list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(P2DB)
 	bash ../list-missing-yomi.sh -d $(P2DB) -j $(JMDB) -l $(P3_LIMIT) -w 'grade = 3' > $@
 
-g4.tsv: ../list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(P2DB)
+g4.raw.tsv: ../list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(P2DB)
 	bash ../list-missing-yomi.sh -d $(P2DB) -j $(JMDB) -l $(P3_LIMIT) -w 'grade = 4' > $@
 
-g5.tsv: ../list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(P2DB)
+g5.raw.tsv: ../list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(P2DB)
 	bash ../list-missing-yomi.sh -d $(P2DB) -j $(JMDB) -l $(P3_LIMIT) -w 'grade = 5' > $@
 
-g6.tsv: ../list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(P2DB)
+g6.raw.tsv: ../list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(P2DB)
 	bash ../list-missing-yomi.sh -d $(P2DB) -j $(JMDB) -l $(P3_LIMIT) -w 'grade = 6' > $@
-
-gjo.tsv: ../list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(P2DB)
-	bash ../list-missing-yomi.sh -d $(P2DB) -j $(JMDB) -l $(P3_LIMIT) -w 'grade = 8' > $@
-
-gjin.tsv: ../list-missing-yomi.sh $(DICTMATCH) $(JMDB) $(P2DB)
-	bash ../list-missing-yomi.sh -d $(P2DB) -j $(JMDB) -l $(P3_LIMIT) -w 'grade in (9, 10)' > $@
 
 $(DICTMATCH):
 	$(MAKE) -C .. dictmatch
+
+$(P3FILTER): p3filter.cpp
+	g++ $< -o $@ -lsqlite3
+
+define FILTER_RULE
+$1.tsv $1.reject.tsv: $1.raw.tsv $$(P3FILTER)
+	./$$(P3FILTER) -d $$(P2DB) -r $$(P3_FILTER) --reject $1.reject.tsv < $1.raw.tsv > $1.tsv
+endef
+
+$(foreach s,$(STAGES),$(eval $(call FILTER_RULE,$(s))))
 
 %.accept.tsv: %.tsv
 	@echo "You MUST edit $< into $@" >&2
@@ -77,13 +83,12 @@ counts: $(DB)
 	  'select "y_p3_g3", count(*) from y_p3_g3;' \
 	  'select "y_p3_g4", count(*) from y_p3_g4;' \
 	  'select "y_p3_g5", count(*) from y_p3_g5;' \
-	  'select "y_p3_g6", count(*) from y_p3_g6;' \
-	  'select "y_p3_gjo", count(*) from y_p3_gjo;' \
-	  'select "y_p3_gjin", count(*) from y_p3_gjin;'
+	  'select "y_p3_g6", count(*) from y_p3_g6;'
 
 clean:
 	rm -f $(DB)
-	rm -f *.sql
+	rm -f $(STAGES:%=%.sql)
+	rm -f $(P3FILTER)
 
 clean-tsv:
-	rm -f *.tsv *.sql
+	rm -f $(STAGES:%=%.raw.tsv) $(STAGES:%=%.tsv) $(STAGES:%=%.reject.tsv) $(STAGES:%=%.sql)
