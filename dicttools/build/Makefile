@@ -1,13 +1,13 @@
 DB_MERGED = dict-merged.db
 DB_SLOTTED = dict-slotted.db
-DIC = hitomoji.dic
+DIC = ../hitomoji.dic
 
 KDIC2_DB = ../kdic2/dict-kdic2.db
 JMDICT_DB = ../jmdict/p4/dict-jmdict-p4.db
 CORPUS_DB = ../my-corpus/corpus.db
 
-DICTGEN = ../dictgen
-SLOT_GREED = ../slot_greed
+DICTGEN = dictgen
+SLOT_GREED = slot_greed
 
 BASE_CORPUS ?= 0.7
 MY_CORPUS ?= 0.3
@@ -18,7 +18,7 @@ KANJI_WHERE ?= grade between 1 and 8
 all: $(DIC)
 
 $(DIC): $(DB_SLOTTED) $(DICTGEN)
-	$(DICTGEN) $(DB_SLOTTED) $@
+	./$(DICTGEN) $(DB_SLOTTED) $@
 
 $(DB_SLOTTED): $(DB_MERGED) $(SLOT_GREED)
 	rm -f $@
@@ -38,7 +38,7 @@ $(DB_SLOTTED): $(DB_MERGED) $(SLOT_GREED)
 			); \
 			commit;"; \
 	fi
-	$(SLOT_GREED) -d $@
+	./$(SLOT_GREED) -d $@
 
 $(DB_MERGED): $(KDIC2_DB) $(JMDICT_DB)
 	rm -f $@
@@ -51,11 +51,11 @@ $(KDIC2_DB):
 $(JMDICT_DB):
 	$(MAKE) -C ../jmdict/p4 dict-jmdict-p4.db
 
-$(DICTGEN): ../dictgen.cpp
-	$(MAKE) -C .. dictgen
+$(DICTGEN): dictgen.cpp
+	g++ $< -o $@ -lsqlite3
 
-$(SLOT_GREED): ../slot_greed.cpp
-	$(MAKE) -C .. slot_greed
+$(SLOT_GREED): slot_greed.cpp
+	g++ $< -o $@ -lsqlite3
 
 counts: $(DB_SLOTTED)
 	sqlite3 $(DB_SLOTTED) \
@@ -66,3 +66,4 @@ counts: $(DB_SLOTTED)
 
 clean:
 	rm -f $(DB_MERGED) $(DB_SLOTTED) $(DIC)
+	rm -f $(DICTGEN) $(SLOT_GREED)

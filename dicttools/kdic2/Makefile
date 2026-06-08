@@ -7,9 +7,9 @@ SQLS = $(foreach g,$(GROUPS),$(g)/$(g).xml.k.sql $(g)/$(g).xml.y.sql $(g)/$(g).x
 
 all: dict-kdic2.db
 
-dict-kdic2.db: ../create.sql $(SQLS)
+dict-kdic2.db: create.sql $(SQLS)
 	rm -f $@
-	sqlite3 $@ < ../create.sql
+	sqlite3 $@ < create.sql
 	{ \
 	  echo begin\; ; \
 	  for g in $(GROUPS); do \

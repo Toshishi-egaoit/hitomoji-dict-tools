@@ -16,7 +16,7 @@
 
 - `dict-merged.db`
 - `dict-slotted.db`
-- `hitomoji.dic`
+- `../hitomoji.dic`
 
 ## ツール
 
@@ -34,5 +34,5 @@
 - 人名用漢字まで含める場合は `KANJI_WHERE='grade between 1 and 10'` にできますが、
   現行の `MAX_SLOT=120` では一部の読みが溢れるため、slot 方針の追加整理が必要です。
 - `dict-slotted.db` は `slot_greed` によって slot を決定した後の DB です。
-- `hitomoji.dic` は IME が読む最終バイナリ辞書です。
-- `../dictgen.cpp` と `../slot_greed.cpp` は、将来的にこのディレクトリへ移動する。
+- `../hitomoji.dic` は IME が読む最終バイナリ辞書です。
+- `dictgen.cpp` と `slot_greed.cpp` は、このディレクトリで管理する。
