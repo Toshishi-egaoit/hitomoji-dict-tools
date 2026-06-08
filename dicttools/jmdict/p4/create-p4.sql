@@ -1,6 +1,6 @@
 drop view if exists y;
 
-create table if not exists y_p3_g1 (
+create table if not exists y_p4_gjo (
 	cp	integer,
 	yomi	varchar(10),
 	wd_cnt	integer,
@@ -8,39 +8,7 @@ create table if not exists y_p3_g1 (
 	unique(cp, yomi)
 );
 
-create table if not exists y_p3_g2 (
-	cp	integer,
-	yomi	varchar(10),
-	wd_cnt	integer,
-	foreign key(cp) references k(cp),
-	unique(cp, yomi)
-);
-
-create table if not exists y_p3_g3 (
-	cp	integer,
-	yomi	varchar(10),
-	wd_cnt	integer,
-	foreign key(cp) references k(cp),
-	unique(cp, yomi)
-);
-
-create table if not exists y_p3_g4 (
-	cp	integer,
-	yomi	varchar(10),
-	wd_cnt	integer,
-	foreign key(cp) references k(cp),
-	unique(cp, yomi)
-);
-
-create table if not exists y_p3_g5 (
-	cp	integer,
-	yomi	varchar(10),
-	wd_cnt	integer,
-	foreign key(cp) references k(cp),
-	unique(cp, yomi)
-);
-
-create table if not exists y_p3_g6 (
+create table if not exists y_p4_gjin (
 	cp	integer,
 	yomi	varchar(10),
 	wd_cnt	integer,
@@ -85,4 +53,8 @@ create view y as
 	union
 	select distinct letter, k.cp, 'on', yomi from y_p3_g5 inner join k on k.cp = y_p3_g5.cp
 	union
-	select distinct letter, k.cp, 'on', yomi from y_p3_g6 inner join k on k.cp = y_p3_g6.cp;
+	select distinct letter, k.cp, 'on', yomi from y_p3_g6 inner join k on k.cp = y_p3_g6.cp
+	union
+	select distinct letter, k.cp, 'on', yomi from y_p4_gjo inner join k on k.cp = y_p4_gjo.cp
+	union
+	select distinct letter, k.cp, 'on', yomi from y_p4_gjin inner join k on k.cp = y_p4_gjin.cp;
