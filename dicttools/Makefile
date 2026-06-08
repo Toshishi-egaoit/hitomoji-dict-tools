@@ -20,7 +20,7 @@ build-curation:
 		base=$${f##*/}; \
 		cp "$$f" "curation/jmdict/p4/$${base%.accept.tsv}.tsv"; \
 	done
-	cp hitomoji.dic curation/hitomoji.dic
+	cp build/hitomoji.dic curation/hitomoji.dic
 
 apply-curation:
 	mkdir -p jmdict/p3 jmdict/p4
