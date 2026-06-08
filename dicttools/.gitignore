@@ -7,12 +7,17 @@ kdic2.small.xml
 !jmdict/create.sql
 !jmdict/p1/create-p1.sql
 !jmdict/p3/create-p3.sql
+!jmdict/p4/create-p4.sql
 **/*.db
+**/*.db-
 **/*.xml
 **/*.csv
 **/*.tsv
+!curation/**/*.tsv
 **/*.list
 **/*.choice
+**/*.diff
+**/*.old*
 **/*.tmp
 **/*.swp
 **/*.dtd
@@ -22,6 +27,8 @@ my-corpus/source.txt
 dictgen
 dictview
 hitomoji.dic
+!curation/hitomoji.dic
 jmdict/dictmatch
 jmdict/p1/p1filter
+jmdict/p3/p3filter
 slot_greed
